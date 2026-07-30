@@ -208,17 +208,14 @@ terraform apply
 | Secrets Manager | App and platform secrets | Stores RDS credentials, Helm git token, GitLab runner token, and addon passwords (ArgoCD, Grafana, Elastic) |
 | Valkey | ElastiCache Valkey 7.2 (`cache.t4g.micro`, port 6379) | In-memory cache for catalog and inventory services |
 | EKS | EKS 1.35 + managed node group | Kubernetes cluster in private subnets; Spot nodes (`t3`/`t3a.medium`, desired 3) |
-| Helm | AWS Load Balancer Controller | Always installed; binds ALB target groups to pods |
-| Helm | ArgoCD + cert-manager | GitOps controller; syncs apps from `shopping-cart-manifest` (`argocd/` on `main`) |
-| Helm | Cluster Autoscaler | Scales the EKS node group based on pending pods |
-| Helm | External Secrets | Syncs AWS Secrets Manager values into Kubernetes secrets |
-| Helm | Pod Identity (inventory, order) | IAM roles for service accounts to access SQS |
+| Helm | AWS Load Balancer Controller, ArgoCD, cert-manager, Cluster Autoscaler, External Secrets, Pod Identity (inventory, order) | Installs cluster addons: ALB target group binding, GitOps sync from `shopping-cart-manifest`, node autoscaling, Secrets Manager sync, and SQS IAM roles for service accounts |
 
 ### 4. Setup GitLab
-- Create environment for each project: `lab` on their protected **main** branch
+- Create an environment for each project: `lab` on their protected **main** branch
+
 <img src="docs/images/image57.png" alt="GitLab environment" width="300" />
 
-<image src="docs/images/image58.png" alt="GitLab environment" width="600" />
+<img src="docs/images/image58.png" alt="GitLab environment" width="600" />
 
 - Update the GitLab CI/CD variables.
 
