@@ -215,7 +215,7 @@ terraform apply
 
 <img src="docs/images/image57.png" alt="GitLab environment" width="300" />
 
-<img src="docs/images/image58.png" alt="GitLab environment" width="600" />
+<img src="docs/images/image58.png" alt="GitLab environment" width="800" />
 
 - Update the GitLab CI/CD variables.
 
