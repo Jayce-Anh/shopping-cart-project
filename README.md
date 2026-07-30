@@ -61,7 +61,13 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
 
 ## II. Overview
 
-This lab deploys a shopping-cart microservice app on AWS EKS with GitLab CI, ArgoCD GitOps, EFK logging, and Kube-Prometheus monitoring. Terraform provisions the full AWS stack: VPC, EKS, ECR, ALB, CloudFront, RDS, ElastiCache (Valkey), SQS, and supporting IAM, KMS, and Secrets Manager resources. Three Spring Boot services (Catalog, Inventory, and Order) run on EKS; a React SPA is served from S3 behind CloudFront. GitLab CI builds and pushes images, and ArgoCD syncs Helm manifests from Git so cluster state follows GitOps. Observability uses Fluentd → Elasticsearch → Kibana for logs and Prometheus → Grafana for metrics, with optional Slack alerts. Access to ArgoCD, Grafana, and Kibana goes through an external ALB with ACM certificates and Route53 DNS. The result is an end-to-end path from infrastructure as code through CI/CD, GitOps deployment, and production-style logging and monitoring.
+- This lab deploys a shopping-cart microservice app on AWS EKS with GitLab CI, ArgoCD GitOps, EFK logging, and Kube-Prometheus monitoring.
+- Terraform provisions the full AWS stack: VPC, EKS, ECR, ALB, CloudFront, RDS, ElastiCache (Valkey), SQS, and supporting IAM, KMS, and Secrets Manager resources.
+- Three Spring Boot services (Catalog, Inventory, and Order) run on EKS; a React SPA is served from S3 behind CloudFront.
+- GitLab CI builds and pushes images, and ArgoCD syncs Helm manifests from Git so cluster state follows GitOps.
+- Observability uses Fluentd → Elasticsearch → Kibana for logs and Prometheus → Grafana for metrics, with optional Slack alerts.
+- Access to ArgoCD, Grafana, and Kibana goes through an external ALB with ACM certificates and Route53 DNS.
+- The result is an end-to-end path from infrastructure as code through CI/CD, GitOps deployment, and production-style logging and monitoring.
 
 ### 1. Architecture
 
@@ -132,6 +138,7 @@ This lab deploys a shopping-cart microservice app on AWS EKS with GitLab CI, Arg
 <img src="docs/images/image7.png" alt="Local repository folder structure" width="300" />
 
 - Install the required tools: AWS CLI, Git, Terraform, Helm, kubectl, and Slack.
+- Login to AWS via AWS CLI
 
 <img src="docs/images/image8.png" alt="Installed local tools" width="600" />
 
@@ -208,6 +215,10 @@ terraform apply
 | Helm | Pod Identity (inventory, order) | IAM roles for service accounts to access SQS |
 
 ### 4. Setup GitLab
+- Create environment for each project: `lab` on their protected **main** branch
+<img src="docs/images/image57.png" alt="GitLab environment" width="300" />
+
+<image src="docs/images/image58.png" alt="GitLab environment" width="600" />
 
 - Update the GitLab CI/CD variables.
 
