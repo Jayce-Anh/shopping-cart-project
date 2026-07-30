@@ -181,9 +181,9 @@ terraform apply --target=module.acm_cf
 
 - Wait until the domain transfer completes and both certificates validate successfully (about 15–30 minutes).
 
-<img src="docs/images/image15.png" alt="Validated ACM certificates" width="400" />
+<img src="docs/images/image15.png" alt="Validated ACM certificates" width="800" />
 
-<img src="docs/images/image16.png" alt="Validated domain status" width="400" />
+<img src="docs/images/image16.png" alt="Validated domain status" width="800" />
 
 ### 3. Deploy the rest of the services
 
@@ -213,7 +213,7 @@ terraform apply
 ### 4. Setup GitLab
 - Create an environment for each project: `lab` on their protected **main** branch
 
-<img src="docs/images/image57.png" alt="GitLab environment" width="300" />
+<img src="docs/images/image57.png" alt="GitLab environment" width="800" />
 
 <img src="docs/images/image58.png" alt="GitLab environment" width="800" />
 
@@ -262,7 +262,7 @@ terraform apply
 
 ### 6. Deploy infrastructure with GitLab CI
 
-<img src="docs/images/image23.png" alt="Infrastructure pipeline overview" width="600" />
+<img src="docs/images/image23.png" alt="Infrastructure pipeline overview" width="800" />
 
 - Push changes to the `shopping-cart-infra` repository.
 - Verify the `terraform-plan` job, then run the `terraform-apply` job manually.
@@ -271,9 +271,9 @@ terraform apply
 
 - Confirm the CI/CD pipeline succeeds:
 
-<img src="docs/images/image25.png" alt="Successful infrastructure CI/CD" width="500" />
+<img src="docs/images/image25.png" alt="Successful infrastructure CI/CD" width="800" />
 
-<img src="docs/images/image4.png" alt="Infrastructure environment deployments" width="600" />
+<img src="docs/images/image4.png" alt="Infrastructure environment deployments" width="800" />
 
 ### 7. Deploy ArgoCD, EFK, and Kube-Prometheus
 
@@ -287,13 +287,13 @@ terraform apply
 
 - Copy each service target group ARN and paste it into the `targetGroupArn` fields in the services, logging, and monitoring manifest value files.
 
-<img src="docs/images/image28.png" alt="Target group ARN" width="500" />
+<img src="docs/images/image28.png" alt="Target group ARN" width="800" />
 
-<img src="docs/images/image29.png" alt="Manifest targetGroupArn values" width="600" />
+<img src="docs/images/image29.png" alt="Manifest targetGroupArn values" width="800" />
 
 - Create a Route53 record for the ArgoCD hostname `argocd.shopping-cart.jayce-lab.works` (ALB alias).
 
-<img src="docs/images/image30.png" alt="ArgoCD Route53 record" width="400" />
+<img src="docs/images/image30.png" alt="ArgoCD Route53 record" width="800" />
 
 - Log in to the ArgoCD console at `argocd.shopping-cart.jayce-lab.works` with user `admin` and the password from the `helm-addon-credentials` secret.
 
@@ -307,17 +307,17 @@ terraform apply
 
 - Commit and push changes to all service repositories:
 
-<img src="docs/images/image34.png" alt="Service repository changes" width="500" />
+<img src="docs/images/image34.png" alt="Service repository changes" width="800" />
 
 - Verify the service CI/CD pipelines.
 
-<img src="docs/images/image35.png" alt="Catalog service pipeline" width="600" />
+<img src="docs/images/image35.png" alt="Catalog service pipeline" width="800" />
 
-<img src="docs/images/image36.png" alt="Inventory service pipeline" width="600" />
+<img src="docs/images/image36.png" alt="Inventory service pipeline" width="800" />
 
-<img src="docs/images/image37.png" alt="Order service pipeline" width="600" />
+<img src="docs/images/image37.png" alt="Order service pipeline" width="800" />
 
-<img src="docs/images/image38.png" alt="Web-ui service pipeline" width="600" />
+<img src="docs/images/image38.png" alt="Web-ui service pipeline" width="800" />
 
 - Verify application health on the ArgoCD console.
 
@@ -385,6 +385,4 @@ terraform apply
 
 <img src="docs/images/image56.png" alt="Kibana dashboard" width="800" />
 
-## Done
-
-Thank you for reading this project documentation.
+## Thanks for reading!
