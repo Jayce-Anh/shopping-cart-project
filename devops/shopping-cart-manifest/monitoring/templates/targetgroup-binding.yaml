@@ -1,0 +1,18 @@
+#################################### TARGET GROUP BINDING ##########################################
+
+#=============== Grafana Target Group Binding ===============#
+{{- if .Values.grafana.targetGroupArn }}
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: grafana-tgb
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+spec:
+  serviceRef:
+    name: prometheus-grafana
+    port: 80
+  targetGroupARN: {{ .Values.grafana.targetGroupArn | quote }}
+  targetType: ip
+{{- end }}

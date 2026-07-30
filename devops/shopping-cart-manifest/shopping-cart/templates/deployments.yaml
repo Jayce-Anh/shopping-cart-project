@@ -1,0 +1,203 @@
+################################ DEPLOYMENTS ################################
+
+#================== Catalog ==================#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.catalog.replicas }}
+  revisionHistoryLimit: {{ .Values.catalog.revisionHistoryLimit }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.catalog.maxSurge }}
+      maxUnavailable: {{ .Values.catalog.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: catalog
+  template:
+    metadata:
+      labels:
+        app: catalog
+        app.kubernetes.io/part-of: {{ .Values.namespace }}
+    spec:
+      topologySpreadConstraints:
+        # - maxSkew: 1  # per-service spread; enable when replicas > 1 (with podAntiAffinity)
+        #   topologyKey: kubernetes.io/hostname # "spread across" = per node
+        #   whenUnsatisfiable: DoNotSchedule # if rule can't be met → don't schedule and wait for new node (strict rule)
+        #   labelSelector: # only consider pods matching these labels
+        #     matchLabels:
+        #       app: catalog # apply to catalog service
+        - maxSkew: 1 # how uneven the pod counts can be between nodes (e.g. 5 vs 4 -> OK, 6 vs 4 -> NOT OK).
+          topologyKey: kubernetes.io/hostname # "spread across" = per node
+          whenUnsatisfiable: ScheduleAnyway # if rule can't be met → schedule anyway (soft rule)
+          labelSelector: # only consider pods matching these labels
+            matchLabels:
+              app.kubernetes.io/part-of: {{ .Values.namespace }} # apply to all services
+      containers:
+      - name: catalog
+        image: {{ .Values.catalog.image }}:{{ .Values.catalog.tag }}
+        envFrom:
+        - secretRef:
+            name: catalog-secrets
+        resources:
+          requests:
+            cpu: {{ .Values.catalog.resources.requests.cpu | quote }}
+            memory: {{ .Values.catalog.resources.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.catalog.resources.limits.cpu | quote }}
+            memory: {{ .Values.catalog.resources.limits.memory | quote }}
+        ports:  
+        - containerPort: {{ .Values.catalog.port }}
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.catalog.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.catalog.port }}
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          failureThreshold: 3
+
+---
+#================== Inventory ==================#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.inventory.replicas }}
+  revisionHistoryLimit: {{ .Values.inventory.revisionHistoryLimit }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.inventory.maxSurge }}
+      maxUnavailable: {{ .Values.inventory.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+        app.kubernetes.io/part-of: {{ .Values.namespace }}
+    spec:
+      topologySpreadConstraints:
+        # - maxSkew: 1  # per-service spread; enable when replicas > 1 (with podAntiAffinity)
+        #   topologyKey: kubernetes.io/hostname # "spread across" = per node
+        #   whenUnsatisfiable: DoNotSchedule # if rule can't be met → don't schedule and wait for new node (strict rule)
+        #   labelSelector: # only consider pods matching these labels
+        #     matchLabels:
+        #       app: inventory # apply to inventory service
+        - maxSkew: 1 # how uneven the pod counts can be between nodes (e.g. 5 vs 4 -> OK, 6 vs 4 -> NOT OK).
+          topologyKey: kubernetes.io/hostname # "spread across" = per node
+          whenUnsatisfiable: ScheduleAnyway # if rule can't be met → schedule anyway (soft rule)
+          labelSelector: # only consider pods matching these labels
+            matchLabels:
+              app.kubernetes.io/part-of: {{ .Values.namespace }} # apply to all services
+      serviceAccountName: inventory
+      containers:
+      - name: inventory
+        image: {{ .Values.inventory.image }}:{{ .Values.inventory.tag }}
+        envFrom:
+        - secretRef:
+            name: inventory-secrets
+        resources:
+          requests:
+            cpu: {{ .Values.inventory.resources.requests.cpu | quote }}
+            memory: {{ .Values.inventory.resources.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.inventory.resources.limits.cpu | quote }}
+            memory: {{ .Values.inventory.resources.limits.memory | quote }}
+        ports:
+        - containerPort: {{ .Values.inventory.port }}
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.inventory.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.inventory.port }}
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          failureThreshold: 3
+
+---
+#================== Order ==================#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.order.replicas }}
+  revisionHistoryLimit: {{ .Values.order.revisionHistoryLimit }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.order.maxSurge }}
+      maxUnavailable: {{ .Values.order.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+        app.kubernetes.io/part-of: {{ .Values.namespace }}
+    spec:
+      topologySpreadConstraints:
+        # - maxSkew: 1  # per-service spread; enable when replicas > 1 (with podAntiAffinity)
+        #   topologyKey: kubernetes.io/hostname # "spread across" = per node
+        #   whenUnsatisfiable: DoNotSchedule # if rule can't be met → don't schedule and wait for new node (strict rule)
+        #   labelSelector: # only consider pods matching these labels
+        #     matchLabels:
+        #       app: order # apply to order service
+        - maxSkew: 1 # how uneven the pod counts can be between nodes (e.g. 5 vs 4 -> OK, 6 vs 4 -> NOT OK).
+          topologyKey: kubernetes.io/hostname # "spread across" = per node
+          whenUnsatisfiable: ScheduleAnyway # if rule can't be met → schedule anyway (soft rule)
+          labelSelector: # only consider pods matching these labels
+            matchLabels:
+              app.kubernetes.io/part-of: {{ .Values.namespace }} # apply to all services
+      serviceAccountName: order
+      containers:
+      - name: order
+        image: {{ .Values.order.image }}:{{ .Values.order.tag }}
+        envFrom:
+        - secretRef:
+            name: order-secrets
+        resources:
+          requests:
+            cpu: {{ .Values.order.resources.requests.cpu | quote }}
+            memory: {{ .Values.order.resources.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.order.resources.limits.cpu | quote }}
+            memory: {{ .Values.order.resources.limits.memory | quote }}
+        ports:
+        - containerPort: {{ .Values.order.port }}
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.order.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.order.port }}
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          failureThreshold: 3

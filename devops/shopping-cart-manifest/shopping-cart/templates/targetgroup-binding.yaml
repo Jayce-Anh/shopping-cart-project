@@ -1,0 +1,48 @@
+################################ TARGET GROUP BINDINGS ################################
+
+#================== Catalog ==================#
+{{- if .Values.catalog.targetGroupArn }}
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: catalog-tgb
+  namespace: {{ .Values.namespace }}
+spec:
+  serviceRef:
+    name: catalog
+    port: {{ .Values.catalog.port }}
+  targetGroupARN: {{ .Values.catalog.targetGroupArn }}
+  targetType: ip
+{{- end }}
+
+#================== Inventory ==================#
+{{- if .Values.inventory.targetGroupArn }}
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: inventory-tgb
+  namespace: {{ .Values.namespace }}
+spec:
+  serviceRef:
+    name: inventory
+    port: {{ .Values.inventory.port }}
+  targetGroupARN: {{ .Values.inventory.targetGroupArn }}
+  targetType: ip
+{{- end }}
+
+#================== Order ==================#
+{{- if .Values.order.targetGroupArn }}
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: order-tgb
+  namespace: {{ .Values.namespace }}
+spec:
+  serviceRef:
+    name: order
+    port: {{ .Values.order.port }}
+  targetGroupARN: {{ .Values.order.targetGroupArn }}
+  targetType: ip
+{{- end }}

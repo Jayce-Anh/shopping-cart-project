@@ -1,0 +1,24 @@
+server:
+  port: 4000
+
+spring:
+  cloud:
+    refresh:
+      enabled: false
+  datasource:
+    url: jdbc:mysql://mysql:3306/catalog?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: app
+    password: app
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    initialization-mode: always
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  cache:
+    type: simple
+
+inventory:
+  service:
+    url: http://inventory:5000

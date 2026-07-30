@@ -1,0 +1,95 @@
+#################################### KIBANA ##########################################
+#=============== Kibana Deployment ===============#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: logging
+  labels:
+    app: kibana
+spec:
+  replicas: {{ .Values.efk.kibana.replicas }}
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: {{ .Values.efk.kibana.image }}
+          resources:
+            {{- toYaml .Values.efk.kibana.resources | nindent 12 }}
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: '["https://elasticsearch:9200"]'
+            - name: SERVER_HOST
+              value: "0.0.0.0"
+            - name: SERVER_SSL_ENABLED
+              value: "true"
+            - name: SERVER_SSL_CERTIFICATE
+              value: /etc/kibana/certs/tls.crt
+            - name: SERVER_SSL_KEY
+              value: /etc/kibana/certs/tls.key
+            - name: ELASTICSEARCH_USERNAME
+              value: "elastic"
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: efk-credentials
+                  key: elastic_password
+            - name: ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES
+              value: /etc/elasticsearch/ca.crt
+            - name: ELASTICSEARCH_SSL_VERIFICATIONMODE
+              value: "certificate"
+            - name: XPACK_SECURITY_ENABLED
+              value: "true"
+          ports:
+            - containerPort: 5601
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 5601
+              scheme: HTTPS
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: 5601
+              scheme: HTTPS
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          startupProbe:
+            httpGet:
+              path: /login
+              port: 5601
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          volumeMounts:
+            - name: es-ca
+              mountPath: /etc/elasticsearch
+              readOnly: true
+            - name: kibana-tls
+              mountPath: /etc/kibana/certs
+              readOnly: true
+      volumes:
+        - name: es-ca
+          secret:
+            secretName: elasticsearch-tls
+            items:
+              - key: ca.crt
+                path: ca.crt
+        - name: kibana-tls
+          secret:
+            secretName: kibana-tls
+
+

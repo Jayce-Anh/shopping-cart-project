@@ -1,0 +1,84 @@
+stages:
+  - validate
+  - plan
+  - deploy
+# - destroy
+
+workflow:
+  rules:
+  - if: $CI_COMMIT_BRANCH =~ /^main.*/ 
+    variables:
+      ENV: lab
+  # - if: $CI_COMMIT_BRANCH =~ /^develop.*/
+  #   variables:
+  #     ENV: develop
+  # - if: $CI_COMMIT_BRANCH =~ /^staging.*/
+  #   variables:
+  #     ENV: staging
+  # - if: $CI_COMMIT_BRANCH =~ /^main.*/
+  #   variables:
+  #     ENV: product
+
+image:
+  name: hashicorp/terraform:latest
+  entrypoint: [""]
+
+before_script:
+  - apk add --no-cache aws-cli
+  - aws configure set region "$AWS_REGION"
+  - aws configure set output "json"
+  - >
+    export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s"
+    $(aws sts assume-role
+    --role-arn "$AWS_ROLE"
+    --role-session-name "gitlab-ci-session"
+    --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]'
+    --output text))
+  - aws sts get-caller-identity
+  - terraform init
+
+.validate:
+  environment:
+    name: ${ENV}
+  stage: validate
+  script:
+    - terraform fmt -recursive
+    - terraform validate
+
+.plan:
+  environment:
+    name: ${ENV}
+  stage: plan
+  script:
+    - terraform plan -var-file="terraform.tfvars"
+
+.deploy:
+  environment:
+    name: ${ENV}
+  stage: deploy
+  script:
+    - terraform apply -auto-approve -var-file="terraform.tfvars"
+  when: manual
+
+.destroy:
+  environment:
+    name: ${ENV}
+  stage: destroy
+  script:
+    - terraform destroy -auto-approve -var-file="terraform.tfvars"
+  when: manual
+
+terraform-validate:
+  extends: .validate
+
+terraform-plan:
+  extends: .plan
+  needs: [terraform-validate]
+
+terraform-deploy:
+  extends: .deploy
+  needs: [terraform-plan]
+
+# terraform-destroy:
+#   extends: .destroy
+#   needs: [terraform-plan]

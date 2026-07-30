@@ -1,0 +1,65 @@
+################################ VALUES ################################
+
+#=============== Project ================#
+namespace: shopping-cart
+
+aws:
+  region: ap-southeast-1
+  account: "701604998432"
+
+externalSecrets:
+  rdsSecretName: "lab-shopping-cart-rds-credentials"
+
+#================== Catalog ==================#
+catalog:
+  replicas: 1
+  revisionHistoryLimit: 2
+  maxSurge: 1
+  maxUnavailable: 0
+  image: "701604998432.dkr.ecr.ap-southeast-1.amazonaws.com/lab-shopping-cart-catalog"
+  tag: "73037aed4f66b4c375a812a7dd47427a77d64972"
+  port: 4000
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-catalog/0606e9636af917f6"
+  resources:
+    requests:
+      cpu: "0.5"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+#================== Inventory ==================#
+inventory:
+  replicas: 1
+  revisionHistoryLimit: 2
+  maxSurge: 1
+  maxUnavailable: 0
+  image: "701604998432.dkr.ecr.ap-southeast-1.amazonaws.com/lab-shopping-cart-inventory"
+  tag: "f02670cc1bdc2491b8cffd927d0bfd4c08afcfc1"
+  port: 5000
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-inventory/735e25a683c0afa1"
+  resources:
+    requests:
+      cpu: "0.5"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+#================== Order ==================#
+order:
+  replicas: 1
+  revisionHistoryLimit: 2
+  maxSurge: 1
+  maxUnavailable: 0
+  image: "701604998432.dkr.ecr.ap-southeast-1.amazonaws.com/lab-shopping-cart-order"
+  tag: "0214a9213d4598bd7ba42d13975658be0676e2cc"
+  port: 6000
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-order/dcfb299231deb0df"
+  resources:
+    requests:
+      cpu: "0.5"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"

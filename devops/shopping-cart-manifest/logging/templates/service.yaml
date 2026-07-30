@@ -1,0 +1,19 @@
+#################################### SERVICE ##########################################
+
+#=============== Kibana Service ===============#
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: logging
+  labels:
+    app: kibana
+spec:
+  selector:
+    app: kibana
+  ports:
+    - port: 5601
+      targetPort: 5601
+      protocol: TCP
+      name: https
+  type: ClusterIP

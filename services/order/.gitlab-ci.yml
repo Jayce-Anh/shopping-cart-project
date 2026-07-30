@@ -1,0 +1,124 @@
+stages:
+  - build
+  - push
+  - deploy
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^main.*/
+      variables:
+        ENV: lab
+    # - if: $CI_COMMIT_BRANCH =~ /^dev.*/
+    #   variables:
+    #     ENV: dev
+    # - if: $CI_COMMIT_BRANCH =~ /^staging.*/
+    #   variables:
+    #     ENV: stg
+    # - if: $CI_COMMIT_BRANCH =~ /^main.*/
+    #   variables:
+    #     ENV: prd
+
+variables:
+  SERVICE_NAME: order
+  ARGOCD_APP_NAME: shopping-cart
+  HELM_REPO_NAME: shoppingcart-manifest
+  HELM_CHART_PATH: shopping-cart/values.yaml
+  HELM_REPO_BRANCH: main
+
+build-package:
+  stage: build
+  image: maven:3.8.6-eclipse-temurin-8
+  cache:
+    paths:
+      - .m2/repository
+  script:
+    - mvn -B -DskipTests clean package
+  artifacts:
+    paths:
+      - target/
+    expire_in: 1 week
+
+assume-role:
+  stage: push
+  environment:
+    name: ${ENV}
+  image:
+    name: amazon/aws-cli
+    entrypoint: ['']
+  needs: ['build-package']
+  script:
+    - |
+      CREDS=$(aws sts assume-role \
+        --role-arn "$AWS_ROLE" \
+        --role-session-name "gitlab-ci-${CI_JOB_ID}" \
+        --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" \
+        --output text)
+      echo "AWS_ACCESS_KEY_ID=$(echo $CREDS | awk '{print $1}')"     >> creds.env
+      echo "AWS_SECRET_ACCESS_KEY=$(echo $CREDS | awk '{print $2}')" >> creds.env
+      echo "AWS_SESSION_TOKEN=$(echo $CREDS | awk '{print $3}')"     >> creds.env
+  artifacts:
+    reports:
+      dotenv: creds.env
+
+push-image:
+  stage: push
+  environment:
+    name: ${ENV}
+  image:
+    name: gcr.io/kaniko-project/executor:v1.15.0-debug
+    entrypoint: ['']
+  needs: ['build-package', 'assume-role']
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"credsStore\":\"ecr-login\",\"credHelpers\":{\"$AWS_ECR\":\"ecr-login\"}}" > /kaniko/.docker/config.json
+    - echo "Injecting environment variables ..."
+    - if [ -n "$APP_ENV" ]; then cat $APP_ENV > .env; else touch .env; fi
+  script:
+    - export AWS_DEFAULT_REGION="${AWS_REGION}"
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+        --destination "${AWS_ECR}:${CI_COMMIT_SHA}" \
+        --digest-file=target/jib-image.digest
+  artifacts:
+    paths:
+      - target/jib-image.digest
+
+update-helm-chart:
+  stage: deploy
+  environment:
+    name: ${ENV}
+  needs: ['push-image']
+  image:
+    name: alpine/git
+    entrypoint: ['']
+  before_script:
+    - git config --global user.email "gitlab-ci@shopping-cart.com"
+    - git config --global user.name "Gitlab CI"
+    - git clone "https://oauth2:${HELM_REPO_TOKEN}@${HELM_REPO_URL}" "${HELM_REPO_NAME}"
+    - cd "${HELM_REPO_NAME}"
+    - git checkout "${HELM_REPO_BRANCH}"
+  script:
+    - |
+      sed -i "/^${SERVICE_NAME}:/,/^[a-z]/ { s/  tag:.*/  tag: \"${CI_COMMIT_SHA}\"/; }" \
+        "${HELM_CHART_PATH}"
+    - git add .
+    - git commit -m "ci - update ${SERVICE_NAME} image tag to ${CI_COMMIT_SHA}"
+    - git push origin "${HELM_REPO_BRANCH}"
+  rules:
+    - when: manual
+
+argocd-app-sync:
+  stage: deploy
+  environment:
+    name: ${ENV}
+  needs: ['update-helm-chart']
+  image:
+    name: argoproj/argocd:v2.6.15
+    entrypoint: ['']
+  before_script:
+    - argocd login "${ARGOCD_URL}" --username admin --password "${ARGOCD_PASSWORD}" --grpc-web
+  script:
+    - argocd app sync "${ARGOCD_APP_NAME}" --grpc-web
+    - argocd app wait "${ARGOCD_APP_NAME}" --resource apps:Deployment:${SERVICE_NAME} --health --timeout 300 --grpc-web

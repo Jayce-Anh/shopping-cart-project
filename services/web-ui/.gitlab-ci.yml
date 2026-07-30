@@ -1,0 +1,65 @@
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^main.*/
+      variables:
+        ENV: lab
+    # - if: $CI_COMMIT_BRANCH =~ /^develop.*/
+    #   variables:
+    #     ENV: develop
+    # - if: $CI_COMMIT_BRANCH =~ /^staging.*/
+    #   variables:
+    #     ENV: staging
+    # - if: $CI_COMMIT_BRANCH =~ /^product.*/
+    #   variables:
+    #     ENV: product
+
+stages:
+  - build
+  - deploy
+
+build-web-ui:
+  stage: build
+  environment:
+    name: ${ENV}
+  image:
+    name: node:20.19.0
+    entrypoint: ['']
+  before_script:
+    - npm install
+    - echo "Injecting environment variables ..."
+    - if [ -n "$APP_ENV" ]; then cat $APP_ENV > .env; else touch .env; fi
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - dist
+    expire_in: 1 week
+
+deploy-web-ui:
+  stage: deploy
+  environment:
+    name: ${ENV}
+  image:
+    name: amazon/aws-cli
+    entrypoint: ['']
+  needs:
+    - build-web-ui
+  only:
+    - main
+  when: manual
+  before_script:
+    - CREDS=$(aws sts assume-role --role-arn "$AWS_ROLE" --role-session-name "gitlab-ci-session" --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
+    - export AWS_ACCESS_KEY_ID=$(echo $CREDS | awk '{print $1}')
+    - export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | awk '{print $2}')
+    - export AWS_SESSION_TOKEN=$(echo $CREDS | awk '{print $3}')
+    - aws sts get-caller-identity
+  script: |
+    echo "Attempting to upload to S3 ..."
+    aws s3 sync dist s3://$AWS_S3_BUCKET --delete
+    echo "Upload files to S3 successfully"
+
+    echo "Invalidating Cloudfront Distribution"
+    aws cloudfront create-invalidation --distribution-id $AWS_DISTRIBUTION_ID --paths '/*'
+    echo "Invalidate Cache successfully"
+
+    echo "Deploy Web UI successfully"

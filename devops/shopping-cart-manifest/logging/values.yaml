@@ -1,0 +1,58 @@
+################################ VALUES ################################
+
+#======================= Project ========================#
+aws:
+  region: ap-southeast-1
+
+externalSecrets:
+  secretName: lab-shopping-cart-helm-addon-credentials
+
+tls:
+  issuerName: selfsigned-issuer
+  kibanaHostname: kibana.shopping-cart.jayce-lab.works
+
+ingress:
+  enabled: false
+
+targetGroupBinding:
+  enabled: true
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-kibana/4d2fbcddff416e5f"
+
+#======================= EFK =========================#
+efk:
+# Elasticsearch
+  elasticsearch:
+    replicas: 1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    storage: 20Gi
+    storageClassName: gp2
+    javaOpts: "-Xms512m -Xmx512m"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 1536Mi
+# Kibana
+  kibana:
+    replicas: 1
+    image: docker.elastic.co/kibana/kibana:7.17.0
+    resources:
+      requests:
+        cpu: 100m
+        memory: 768Mi
+      limits:
+        cpu: 500m
+        memory: 1536Mi
+# Fluentd
+  fluentd:
+    image: fluent/fluentd-kubernetes-daemonset:v1.17-debian-elasticsearch7-1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+

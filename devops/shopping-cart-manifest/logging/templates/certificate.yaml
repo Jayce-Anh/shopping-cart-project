@@ -1,0 +1,106 @@
+#################################### CERTIFICATE ##########################################
+#=============== Internal CA (signed by ClusterIssuer SelfSigned) ===============#
+# Use a CA cert + CA Issuer, then issue the ES leaf cert from that CA.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: elasticsearch-ca
+  namespace: logging
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  isCA: true
+  commonName: elasticsearch-ca
+  subject:
+    organizations:
+      - shopping-cart-logging
+  secretName: elasticsearch-ca
+  duration: 8760h
+  renewBefore: 720h
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  usages:
+    - digital signature
+    - key encipherment
+    - cert sign
+    - crl sign
+  issuerRef:
+    name: {{ .Values.tls.issuerName | quote }}
+    kind: ClusterIssuer
+    group: cert-manager.io
+
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: elasticsearch-ca-issuer
+  namespace: logging
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  ca:
+    secretName: elasticsearch-ca
+
+---
+#============ Elasticsearch TLS Certificate (leaf, signed by internal CA) =============#
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: elasticsearch-tls
+  namespace: logging
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: elasticsearch-tls
+  duration: 8760h
+  renewBefore: 720h
+  commonName: elasticsearch
+  subject:
+    organizations:
+      - shopping-cart-logging
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth
+  issuerRef:
+    name: elasticsearch-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+  dnsNames:
+    - elasticsearch
+    - elasticsearch.logging
+    - elasticsearch.logging.svc
+    - elasticsearch.logging.svc.cluster.local
+    - es-cluster-0
+    - es-cluster-0.elasticsearch
+    - es-cluster-0.elasticsearch.logging
+    - es-cluster-0.elasticsearch.logging.svc
+    - es-cluster-0.elasticsearch.logging.svc.cluster.local
+
+---
+#============ Kibana TLS (ALB HTTPS target group → pod end-to-end TLS) =============#
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kibana-tls
+  namespace: logging
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: kibana-tls
+  duration: 8760h
+  renewBefore: 720h
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: {{ .Values.tls.issuerName | quote }}
+    kind: ClusterIssuer
+    group: cert-manager.io
+  dnsNames:
+    - {{ .Values.tls.kibanaHostname | quote }}

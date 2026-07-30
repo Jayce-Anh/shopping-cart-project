@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: order-service
+  profiles:
+    active: local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    root: INFO
+    com.sivalabs: DEBUG

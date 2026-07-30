@@ -1,0 +1,47 @@
+version: 0.2
+env:
+  shell: bash 
+
+phases:
+  install: 
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - echo "Installing Yarn..."
+      - npm install -g yarn
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - apt install jq -y
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-8)
+      - echo "Deploying commit -> $COMMIT_HASH"
+      - export PARAMETER_STORE=$PARAMETER_STORE
+      - export S3_BUCKET_NAME=$S3_BUCKET_NAME
+      - echo "S3 Bucket Name -> $S3_BUCKET_NAME"
+      - export DISTRIBUTION_ID=$DISTRIBUTION_ID
+      - echo "Distribution ID -> $DISTRIBUTION_ID"
+      - echo "Clone repo -> $GITHUB_REPO, Branch -> $GITHUB_BRANCH"
+      - git clone https://$GITHUB_TOKEN@github.com/$GITHUB_ORG/$GITHUB_REPO.git
+      - cd $GITHUB_REPO
+      - git fetch
+      - git checkout $COMMIT_HASH
+
+  build:
+    on-failure: ABORT
+    commands:
+      - aws ssm get-parameter --name $PARAMETER_STORE --region $REGION --with-decryption --output text --query Parameter.Value > .env
+      - cat .env
+      - yarn install
+      - yarn build
+      - npm install -g serve
+  post_build:
+    on-failure: ABORT
+    commands:
+      - echo "----------------------------Syncing file to S3--------------------------------"
+      - aws s3 sync ./dist s3://$S3_BUCKET_NAME --delete --exact-timestamps
+      - wait $!
+      - echo "----------------------------Invalidate the CloudFront cache-------------------------------"
+      - aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+cache:
+    paths:
+      - node_modules/**/*

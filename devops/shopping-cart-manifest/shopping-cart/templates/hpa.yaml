@@ -1,0 +1,47 @@
+# apiVersion: autoscaling/v2
+# kind: HorizontalPodAutoscaler
+# metadata:
+#   name: catalog
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: catalog
+#   minReplicas: 1
+#   maxReplicas: 2
+#   metrics:
+#   - type: Resource
+#     resource:
+#       name: cpu
+#       target:
+#         type: Utilization
+#         averageUtilization: 70
+#   behavior:
+#     scaleUp:
+#       policies:
+#       - type: Pods
+#         value: 4
+#         periodSeconds: 60
+#       - type: Percent
+#         value: 50
+#         periodSeconds: 60
+#       stabilizationWindowSeconds: 300
+#     scaleDown:
+#       policies:
+#       - type: Pods
+#         value: 2
+#         periodSeconds: 60
+#       - type: Percent
+#         value: 20
+#         periodSeconds: 60
+#       stabilizationWindowSeconds: 300
+
+
+# # scaleUp policies determine how the HPA scales up the number of pods. In this case, it can add up to 4 pods or increase by 50% every 60 seconds, with a stabilization window of 300 seconds.
+# # scaleDown policies determine how the HPA scales down the number of pods. It can remove up to 2 pods or decrease by 20% every 60 seconds, with a stabilization window of 300 seconds.
+
+# ---
+
+
+# ---
+

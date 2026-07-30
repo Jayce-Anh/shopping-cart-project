@@ -1,0 +1,21 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: catalog-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: catalog
+
+---
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: inventory-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: inventory

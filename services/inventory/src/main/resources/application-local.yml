@@ -1,0 +1,27 @@
+server:
+  port: 5000
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:inventorydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  sql:
+    init:
+      mode: always
+  cache:
+    type: simple
+
+cloud:
+  aws:
+    region:
+      static: ${AWS_REGION:ap-southeast-1}
+    stack:
+      auto: false
+
+order:
+  queue:
+    name: ${AWS_SQS_ORDER_QUEUE:local-order-events}

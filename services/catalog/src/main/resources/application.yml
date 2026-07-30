@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: catalog-service
+  profiles:
+    active: local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+inventory:
+  service:
+    url: ${INVENTORY_SERVICE_URL:http://localhost:5000}
+
+logging:
+  level:
+    root: INFO
+    com.sivalabs: DEBUG

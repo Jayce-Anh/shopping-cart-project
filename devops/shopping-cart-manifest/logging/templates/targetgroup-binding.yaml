@@ -1,0 +1,15 @@
+{{- if .Values.targetGroupBinding.enabled }}
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: kibana-tgb
+  namespace: logging
+  labels:
+    app: kibana
+spec:
+  serviceRef:
+    name: kibana
+    port: 5601
+  targetGroupARN: {{ .Values.targetGroupBinding.targetGroupArn | quote }}
+  targetType: ip
+{{- end }}

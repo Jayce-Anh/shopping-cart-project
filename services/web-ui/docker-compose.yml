@@ -1,0 +1,78 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: shopping-cart-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  localstack:
+    image: localstack/localstack:3
+    container_name: shopping-cart-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: sqs
+      DEFAULT_REGION: ap-southeast-1
+    volumes:
+      - ./docker/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  inventory:
+    build: ../inventory
+    container_name: shopping-cart-inventory
+    environment:
+      SPRING_PROFILES_ACTIVE: compose
+    depends_on:
+      mysql:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+  catalog:
+    build: ../catalog
+    container_name: shopping-cart-catalog
+    environment:
+      SPRING_PROFILES_ACTIVE: compose
+    depends_on:
+      mysql:
+        condition: service_healthy
+      inventory:
+        condition: service_started
+
+  order:
+    build: ../order
+    container_name: shopping-cart-order
+    environment:
+      SPRING_PROFILES_ACTIVE: compose
+    depends_on:
+      mysql:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+  web-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.compose
+    container_name: web-ui
+    ports:
+      - "8080:80"
+    depends_on:
+      - catalog
+      - inventory
+      - order

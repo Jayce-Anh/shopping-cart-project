@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: es-cluster
+  namespace: logging
+  labels:
+    app: elasticsearch
+spec:
+  serviceName: elasticsearch
+  replicas: {{ .Values.efk.elasticsearch.replicas }}
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      serviceAccountName: serviceaccount-efk
+      containers:
+        - name: elasticsearch
+          image: {{ .Values.efk.elasticsearch.image }}
+          resources:
+            {{- toYaml .Values.efk.elasticsearch.resources | nindent 12 }}
+          ports:
+            - containerPort: 9200
+              name: rest
+              protocol: TCP
+            - containerPort: 9300
+              name: inter-node
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/elasticsearch/data
+            - name: es-certs
+              mountPath: /usr/share/elasticsearch/config/certs
+              readOnly: true
+          env:
+            - name: cluster.name
+              value: k8s-logs
+            - name: network.host
+              value: 0.0.0.0
+            - name: node.name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: discovery.type
+              value: single-node
+            - name: ES_JAVA_OPTS
+              value: {{ .Values.efk.elasticsearch.javaOpts | quote }}
+            - name: xpack.security.enabled
+              value: "true"
+            - name: xpack.security.transport.ssl.enabled
+              value: "true"
+            - name: xpack.security.http.ssl.enabled
+              value: "true"
+            - name: xpack.security.transport.ssl.verification_mode
+              value: certificate
+            - name: xpack.security.transport.ssl.key
+              value: certs/tls.key
+            - name: xpack.security.transport.ssl.certificate
+              value: certs/tls.crt
+            - name: xpack.security.transport.ssl.certificate_authorities
+              value: certs/ca.crt
+            - name: xpack.security.http.ssl.key
+              value: certs/tls.key
+            - name: xpack.security.http.ssl.certificate
+              value: certs/tls.crt
+            - name: xpack.security.http.ssl.certificate_authorities
+              value: certs/ca.crt
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: efk-credentials
+                  key: elastic_password
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - curl -skf -u "elastic:${ELASTIC_PASSWORD}" https://127.0.0.1:9200/_cluster/health
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - curl -skf -u "elastic:${ELASTIC_PASSWORD}" https://127.0.0.1:9200/
+            initialDelaySeconds: 180
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.36
+          command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/elasticsearch/data
+        - name: increase-vm-max-map
+          image: busybox:1.36
+          command: ["sysctl", "-w", "vm.max_map_count=262144"]
+          securityContext:
+            privileged: true
+      volumes:
+        - name: es-certs
+          secret:
+            secretName: elasticsearch-tls
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: elasticsearch
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ .Values.efk.elasticsearch.storageClassName | quote }}
+        resources:
+          requests:
+            storage: {{ .Values.efk.elasticsearch.storage }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: logging
+  labels:
+    app: elasticsearch
+spec:
+  selector:
+    app: elasticsearch
+  publishNotReadyAddresses: true
+  ports:
+    - port: 9200
+      name: rest
+    - port: 9300
+      name: inter-node
+  clusterIP: None

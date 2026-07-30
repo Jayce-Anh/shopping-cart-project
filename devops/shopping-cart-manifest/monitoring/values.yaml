@@ -1,0 +1,119 @@
+################################ VALUES ################################
+
+#======================= Project ========================#
+aws:
+  region: ap-southeast-1
+
+externalSecrets:
+  secretName: lab-shopping-cart-helm-addon-credentials
+
+grafana:
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-grafana/27c37ff5e8d34a06"
+
+tls:
+  issuerName: selfsigned-issuer
+  grafanaHostname: grafana.shopping-cart.jayce-lab.works
+
+#======================= Kube Prometheus Stack ==========================#
+kube-prometheus-stack:
+  # EKS: control plane is managed by AWS — disable unreachable scrapes + false Down alerts
+  defaultRules:
+    disabled:
+      KubeSchedulerDown: true
+      KubeControllerManagerDown: true
+  kubeScheduler:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+
+# Alert Manager
+  alertmanager:
+    enabled: true
+    alertmanagerSpec:
+      secrets:
+        - alertmanager-slack
+    config:
+      global:
+        resolve_timeout: 5m
+      route:
+        receiver: slack-notifications
+        group_by:
+          - alertname
+          - namespace
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+        routes:
+          - matchers:
+              - alertname = Watchdog
+            receiver: "null"
+      receivers:
+        - name: "null"
+        - name: slack-notifications
+          slack_configs:
+            - api_url_file: /etc/alertmanager/secrets/alertmanager-slack/slack-api-url
+              channel: "#lab-shopping-cart-alert"
+              send_resolved: true
+              title: '{{ template "slack.default.title" . }}'
+              text: '{{ template "slack.default.text" . }}'
+# Grafana
+  grafana:
+    adminUser: admin
+    admin:
+      existingSecret: grafana-credentials
+      userKey: admin-user
+      passwordKey: admin_password
+    extraSecretMounts:
+      - name: grafana-tls
+        secretName: grafana-tls
+        defaultMode: 0440
+        mountPath: /etc/grafana/certs
+        readOnly: true
+    grafana.ini:
+      server:
+        protocol: https
+        cert_file: /etc/grafana/certs/tls.crt
+        cert_key: /etc/grafana/certs/tls.key
+        http_port: 8090
+    readinessProbe:
+      httpGet:
+        path: /api/health
+        port: 8090
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 10
+    livenessProbe:
+      httpGet:
+        path: /api/health
+        port: 8090
+        scheme: HTTPS
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      failureThreshold: 5
+    service:
+      type: ClusterIP
+      targetPort: 8090
+    ingress:
+      enabled: false
+
+# Prometheus
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+      serviceMonitorSelectorNilUsesHelmValues: false
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+
+# Kube State Metrics
+  kube-state-metrics:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi

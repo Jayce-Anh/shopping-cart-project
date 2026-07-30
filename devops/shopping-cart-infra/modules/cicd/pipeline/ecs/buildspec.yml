@@ -1,0 +1,48 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - apt install jq -y
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-8)
+      - echo $COMMIT_HASH
+      - export REGISTRY_URL=${REGISTRY_URL}
+      - echo $REGISTRY_URL
+      - export REGION=${REGION}
+      - echo $REGION
+      - export SSM_ENV=${SSM_ENV}
+      - echo $SSM_ENV
+      - export CONTAINER_NAME=${CONTAINER_NAME}
+      - echo $CONTAINER_NAME
+      - export ECS_CLUSTER_NAME=${ECS_CLUSTER_NAME}
+      - echo $ECS_CLUSTER_NAME
+      - export SERVICE=${SERVICE}
+      - echo $SERVICE
+      - export ECR_IMAGE_TAG=${ECR_IMAGE_TAG}
+      - echo $ECR_IMAGE_TAG
+  build:
+    on-failure: ABORT
+    commands:
+      - echo Build ${SERVICE} with COMMIT-ID ${COMMIT_HASH} started on `date`
+      - aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${REGISTRY_URL}
+      - echo "Getting environment variables from SSM..."
+      - aws ssm get-parameter --name ${SSM_ENV} --region ${REGION} --with-decryption --output text --query Parameter.Value > .env
+      - docker build -t ${REGISTRY_URL}:${COMMIT_HASH} .
+      - docker tag ${REGISTRY_URL}:${COMMIT_HASH} ${REGISTRY_URL}:latest
+      - echo "Pushing images to ECR..."
+      - docker push ${REGISTRY_URL}:${COMMIT_HASH}
+      - docker push ${REGISTRY_URL}:latest
+
+  post_build:
+    commands:
+      - echo "updating image tag date"
+      - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $REGISTRY_URL:$COMMIT_HASH > artifact.json
+      - cat artifact.json
+artifacts:
+  files:
+    - artifact.json
+  name: artifacts

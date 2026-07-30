@@ -1,0 +1,62 @@
+################################ ARGOCD ################################
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shopping-cart
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://gitlab.com/shopping-cart796042412/devops/shoppingcart-manifest.git"
+    targetRevision: main
+    path: shopping-cart
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: shopping-cart
+  # ESO CRD defaulting + generated Secrets; ignore to avoid false OutOfSync / prune loops
+  ignoreDifferences:
+    - group: external-secrets.io
+      kind: ExternalSecret
+      jqPathExpressions:
+        - .spec.data[].remoteRef.conversionStrategy
+        - .spec.data[].remoteRef.decodingStrategy
+        - .spec.data[].remoteRef.metadataPolicy
+        - .spec.dataFrom[].extract.conversionStrategy
+        - .spec.dataFrom[].extract.decodingStrategy
+        - .spec.target.deletionPolicy
+        - .spec.target.template.mergePolicy
+    - group: ""
+      kind: Secret
+      name: catalog-secrets
+      jsonPointers:
+        - /data
+        - /metadata/annotations
+        - /metadata/labels
+        - /metadata/ownerReferences
+    - group: ""
+      kind: Secret
+      name: inventory-secrets
+      jsonPointers:
+        - /data
+        - /metadata/annotations
+        - /metadata/labels
+        - /metadata/ownerReferences
+    - group: ""
+      kind: Secret
+      name: order-secrets
+      jsonPointers:
+        - /data
+        - /metadata/annotations
+        - /metadata/labels
+        - /metadata/ownerReferences
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true

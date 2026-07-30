@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: logging
+  labels:
+    app: fluentd
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      serviceAccount: fluentd
+      serviceAccountName: fluentd
+      tolerations:
+        - operator: Exists
+      containers:
+      - name: fluentd
+        image: {{ .Values.efk.fluentd.image }}
+        env:
+          - name: K8S_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: FLUENT_ELASTICSEARCH_HOST
+            value: "elasticsearch"
+          - name: FLUENT_ELASTICSEARCH_PORT
+            value: "9200"
+          - name: FLUENT_ELASTICSEARCH_SCHEME
+            value: "https"
+          - name: FLUENT_UID
+            value: "0"
+          - name: FLUENTD_SYSTEMD_CONF
+            value: "disable"
+          - name: FLUENT_ELASTICSEARCH_USER
+            value: "elastic"
+          - name: FLUENT_ELASTICSEARCH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: efk-credentials
+                key: elastic_password
+
+        resources:
+          {{- toYaml .Values.efk.fluentd.resources | nindent 10 }}
+
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: dockercontainerlogdirectory
+          mountPath: /var/log/pods
+          readOnly: true
+        - name: config-volume
+          mountPath: /fluentd/etc
+        - name: es-ca
+          mountPath: /etc/elasticsearch
+          readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: dockercontainerlogdirectory
+        hostPath:
+          path: /var/log/pods
+      - name: config-volume
+        configMap:
+          name: fluentd-es-configfi
+      - name: es-ca
+        secret:
+          secretName: elasticsearch-tls
+          items:
+            - key: ca.crt
+              path: ca.crt
+
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: fluentd-es-config
+  namespace: logging
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+data:
+
+  fluent.conf: |-
+    <label @FLUENT_LOG>
+      <match fluent.**>
+        @type null
+        @id ignore_fluent_logs
+      </match>
+    </label>
+
+    <source>
+      @type tail
+      @id in_tail_container_logs
+      path "/var/log/containers/*"
+      pos_file "/var/log/fluentd-containers.log.pos"
+      tag "kubernetes.*"
+      exclude_path ["/var/log/containers/fluentd*.log","/var/log/containers/argocd*.log","/var/log/containers/aws*.log","/var/log/containers/ebs*.log","/var/log/containers/efs*.log","/var/log/containers/core*.log","/var/log/containers/kibana*.log","/var/log/containers/kube*.log","/var/log/containers/es-cluster*.log","/var/log/containers/interface*.log","/var/log/containers/notification*.log","/var/log/containers/prometheus*.log","/var/log/containers/alertmanager*.log","/var/log/containers/grafana*.log"]
+      read_from_head true
+      <parse>
+        @type "none"
+      </parse>
+    </source>
+
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+      @id filter_kube_metadata
+    </filter>
+    <match **>
+      @type elasticsearch
+      @id elasticsearch
+      @log_level "info"
+      include_tag_key true
+      host "elasticsearch"
+      port 9200
+      path ""
+      scheme https
+      ssl_verify true
+      ca_file /etc/elasticsearch/ca.crt
+      user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+      password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+      ssl_version TLSv1_2
+      reload_connections false
+      reconnect_on_error true
+      reload_on_failure true
+      log_es_400_reason false
+      logstash_prefix "fluentd"
+      logstash_dateformat "%Y-%m-%d"
+      logstash_format true
+      index_name "fluentd"
+      target_index_key
+      type_name "fluentd"
+      include_timestamp false
+      template_name
+      template_file
+      template_overwrite false
+      sniffer_class_name "Fluent::Plugin::ElasticsearchSimpleSniffer"
+      request_timeout 5s
+      application_name default
+      suppress_type_name true
+      enable_ilm false
+      ilm_policy_id logstash-policy
+      ilm_policy {}
+      ilm_policy_overwrite false
+      <buffer>
+        flush_thread_count 2
+        flush_interval 5s
+        chunk_limit_size 512k
+        queue_limit_length 8
+        retry_max_interval 30
+        retry_forever true
+      </buffer>
+    </match>

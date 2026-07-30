@@ -1,0 +1,48 @@
+################################ SERVICES ################################
+
+#================== Catalog ==================#
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: catalog
+  ports:
+  - port: {{ .Values.catalog.port }}
+    targetPort: {{ .Values.catalog.port }}
+    protocol: TCP
+
+---
+#================== Inventory ==================#
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: inventory
+  ports:
+  - port: {{ .Values.inventory.port }}
+    targetPort: {{ .Values.inventory.port }}
+    protocol: TCP
+
+---
+#================== Order ==================#
+apiVersion: v1
+kind: Service
+metadata:
+  name: order
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: order
+  ports:
+  - port: {{ .Values.order.port }}
+    targetPort: {{ .Values.order.port }}
+    protocol: TCP
