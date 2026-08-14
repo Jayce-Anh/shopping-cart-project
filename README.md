@@ -91,7 +91,7 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
 
 Internet-facing hostnames use `lab-shopping-cart.jayce-lab.works`.
 
-| Service | Port | Public hostname | Description |
+| Service | Port | Public hostname (Example) | Description |
 | ------- | ---- | --------------- | ----------- |
 | Catalog-service | 4000 | `https://lab-shopping-cart.jayce-lab.works/api/products` | Product catalog API; enriches stock via Inventory; caches with Valkey |
 | Inventory-service | 5000 | `https://lab-shopping-cart.jayce-lab.works/api/inventory` | Inventory API; consumes order events from SQS |
@@ -304,7 +304,7 @@ sudo systemctl enable gitlab-runner
 
 ### 7. Deploy ArgoCD, EFK, and Kube-Prometheus
 
-Create Route53 records for the public hostnames:
+Create Route53 records for the public hostnames (example):
 
 | Hostname | Record | Alias target |
 | -------- | ------ | ------------ |
