@@ -89,7 +89,7 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
 
 ### 3. Services
 
-Internet-facing hostnames use `lab-shopping-cart.jayce-lab.works`.
+Internet-facing hostnames format should be: `<service>.<env-application_name>.<your-domain>`.Example: `lab-shopping-cart.jayce-lab.works`.
 
 | Service | Port | Public hostname (Example) | Description |
 | ------- | ---- | --------------- | ----------- |
