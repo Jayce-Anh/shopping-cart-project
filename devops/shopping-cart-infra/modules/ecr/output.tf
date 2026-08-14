@@ -1,16 +1,15 @@
-######################## OUTPUT ############################
+######################## ECR OUTPUT ############################
 output "ecr_url" {
-  value = aws_ecr_repository.ecr[sort(keys(var.ecr_services))[0]].repository_url
+  description = "Map of ECR repository URLs by service name"
+  value       = { for k, r in aws_ecr_repository.ecr : k => r.repository_url }
 }
 
 output "ecr_name" {
-  value = aws_ecr_repository.ecr[sort(keys(var.ecr_services))[0]].name
+  description = "Map of ECR repository names by service name"
+  value       = { for k, r in aws_ecr_repository.ecr : k => r.name }
 }
 
-output "ecr_urls" {
-  value = { for k, v in aws_ecr_repository.ecr : k => v.repository_url }
-}
-
-output "ecr_repository_names" {
-  value = { for k, v in aws_ecr_repository.ecr : k => v.name }
+output "ecr_arn" {
+  description = "Map of ECR repository ARNs by service name"
+  value       = { for k, r in aws_ecr_repository.ecr : k => r.arn }
 }

@@ -6,9 +6,9 @@ variable "project" {
     name        = string
     env         = string
     region      = string
-    account_ids = list(string)
+    account_id  = string
   })
-  description = "Project metadata (env, name, region, account_ids)"
+  description = "Project configuration"
 }
 
 variable "tags" {
@@ -68,52 +68,12 @@ variable "env_vars_codedeploy" {
 }
 
 #================ Code Pipeline =================#
-variable "git_token" {
-  type        = string
-  description = "Git token for the code pipeline"
+variable "git_config" {
+  type = object({
+    token = optional(string, null),
+    org = string
+    repo = string
+    branch = optional(string, null)
+  })
+  description = "Git configuration"
 }
-
-variable "git_org" {
-  type        = string
-  description = "Git organization for the code pipeline"
-}
-
-variable "git_repo" {
-  type        = string
-  description = "Git repository for the code pipeline"
-}
-
-variable "git_branch" {
-  type        = string
-  description = "Git branch for the code pipeline"
-}
-
-variable "pipeline_name" {
-  type        = string
-  description = "Name of the code pipeline"
-}
-
-variable "enable_ecs_deploy" {
-  type        = bool
-  default     = false
-  description = "Enable ECS deployment stage"
-}
-
-variable "ecs_cluster_name" {
-  type        = string
-  default     = null
-  description = "Name of the ECS cluster"
-}
-
-variable "ecs_service_name" {
-  type        = string
-  default     = null
-  description = "Name of the ECS service"
-}
-
-variable "s3_force_del" {
-  type        = bool
-  default     = true
-  description = "Force destroy the S3 bucket"
-}
-

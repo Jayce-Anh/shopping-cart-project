@@ -69,7 +69,7 @@ spec:
           path: /var/log/pods
       - name: config-volume
         configMap:
-          name: fluentd-es-configfi
+          name: fluentd-es-config
       - name: es-ca
         secret:
           secretName: elasticsearch-tls

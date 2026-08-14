@@ -2,11 +2,11 @@
 
 #========= S3 Bucket ===========#
 resource "aws_s3_bucket" "s3" {
-  bucket        = "${var.project.env}-${var.project.name}-${var.cf_service_name}-s3cf"
-  force_destroy = var.cf_s3_force_del
+  bucket        = "${var.project.env}-${var.project.name}-cloudfront"
+  force_destroy = true
 
   tags = merge(var.tags, {
-    Name = "${var.project.env}-${var.project.name}-${var.cf_service_name}"
+    Name = "${var.project.env}-${var.project.name}-cloudfront"
   })
 }
 
@@ -14,18 +14,16 @@ resource "aws_s3_bucket_versioning" "s3" {
   bucket = aws_s3_bucket.s3.id
 
   versioning_configuration {
-    status     = lookup(var.cf_versioning, "status", lookup(var.cf_versioning, "enabled", "Enabled"))
-    mfa_delete = lookup(var.cf_versioning, "mfa_delete", null)
+    status     = "Enabled"
+    mfa_delete = null
   }
 }
 
 # S3 Ownership Controls
 resource "aws_s3_bucket_ownership_controls" "s3" {
-  count = var.cf_ownership_config != null ? 1 : 0
-
   bucket = aws_s3_bucket.s3.id
 
   rule {
-    object_ownership = lookup(var.cf_ownership_config, "object_ownership", "BucketOwnerPreferred")
+    object_ownership = "BucketOwnerPreferred"
   }
 }

@@ -1,47 +1,39 @@
 ################################ KMS ################################
-# Key policy follows AWS guides:
-# - EKS secrets: https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html
-# - EBS/ASG:     https://docs.aws.amazon.com/autoscaling/ec2/userguide/key-policy-requirements-EBS-encryption.html
-# - EBS CSI:     https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html
 
-data "aws_caller_identity" "current" {}
-
-locals {
-  account_id = data.aws_caller_identity.current.account_id
-}
-
-resource "aws_kms_key" "main" {
-  description             = "${var.project.env}-${var.project.name} — shared CMK for all services"
+#================= KMS Key =================#
+resource "aws_kms_key" "kms" {
+  description             = "Shared KMS key for all services"
   enable_key_rotation     = true
   deletion_window_in_days = 7
 
   tags = merge(var.tags, {
-    Name = "${var.project.env}-${var.project.name}"
+    Name = "${var.project.env}-${var.project.name}-shared-key"
   })
 }
 
-resource "aws_kms_alias" "main" {
-  name          = "alias/${var.project.env}-${var.project.name}"
-  target_key_id = aws_kms_key.main.key_id
+resource "aws_kms_alias" "kms" {
+  name          = "alias/${var.project.env}-${var.project.name}-shared-key"
+  target_key_id = aws_kms_key.kms.key_id
 }
 
-resource "aws_kms_key_policy" "main" {
-  key_id = aws_kms_key.main.id
+#================= KMS Key Policy =================#
+resource "aws_kms_key_policy" "kms" {
+  key_id = aws_kms_key.kms.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = concat(
       [
-        # Root account — full control over the key
+        # Root account - Full control over this key
         {
           Sid    = "RootFullAccess"
           Effect = "Allow"
           Principal = {
-            AWS = "arn:aws:iam::${local.account_id}:root"
+            AWS = "arn:aws:iam::${var.project.account_id}:root"
           }
           Action   = "kms:*"
           Resource = "*"
         },
-        # CloudWatch Logs — encrypt log groups
+        # CloudWatch Logs
         {
           Sid    = "CloudWatchLogs"
           Effect = "Allow"
@@ -55,11 +47,11 @@ resource "aws_kms_key_policy" "main" {
           Resource = "*"
           Condition = {
             ArnEquals = {
-              "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${var.project.region}:${local.account_id}:log-group:*"
+              "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${var.project.region}:${var.project.account_id}:log-group:*"
             }
           }
         },
-        # Secrets Manager — encrypt secrets
+        # Secrets Manager 
         {
           Sid    = "SecretsManager"
           Effect = "Allow"
@@ -69,7 +61,7 @@ resource "aws_kms_key_policy" "main" {
           Action   = ["kms:Decrypt", "kms:GenerateDataKey", "kms:CreateGrant", "kms:DescribeKey"]
           Resource = "*"
         },
-        # EKS control plane — envelope encryption (no GrantIsForAWSResource per AWS docs)
+        # EKS control plane
         {
           Sid    = "EKSService"
           Effect = "Allow"
@@ -79,7 +71,7 @@ resource "aws_kms_key_policy" "main" {
           Action   = ["kms:DescribeKey", "kms:CreateGrant"]
           Resource = "*"
         },
-        # SQS — encrypt queue messages
+        # SQS
         {
           Sid    = "SQS"
           Effect = "Allow"
@@ -89,7 +81,7 @@ resource "aws_kms_key_policy" "main" {
           Action   = ["kms:GenerateDataKey", "kms:Decrypt", "kms:DescribeKey"]
           Resource = "*"
         },
-        # SNS — encrypt topic messages
+        # SNS
         {
           Sid    = "SNS"
           Effect = "Allow"
@@ -99,7 +91,7 @@ resource "aws_kms_key_policy" "main" {
           Action   = ["kms:GenerateDataKey", "kms:Decrypt", "kms:DescribeKey"]
           Resource = "*"
         },
-        # EC2 EBS — AWS recommended ViaService condition
+        # EC2 EBS
         {
           Sid    = "EC2EBSViaService"
           Effect = "Allow"
@@ -113,8 +105,65 @@ resource "aws_kms_key_policy" "main" {
           Resource = "*"
           Condition = {
             StringEquals = {
-              "kms:CallerAccount" = local.account_id
+              "kms:CallerAccount" = "${var.project.account_id}"
               "kms:ViaService"    = "ec2.${var.project.region}.amazonaws.com"
+            }
+          }
+        },
+        # RDS
+        {
+          Sid    = "RDSViaService"
+          Effect = "Allow"
+          Principal = {
+            AWS = "*"
+          }
+          Action = [
+            "kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt*",
+            "kms:GenerateDataKey*", "kms:CreateGrant", "kms:DescribeKey"
+          ]
+          Resource = "*"
+          Condition = {
+            StringEquals = {
+              "kms:CallerAccount" = "${var.project.account_id}"
+              "kms:ViaService"    = "rds.${var.project.region}.amazonaws.com"
+            }
+          }
+        },
+        # ElastiCache
+        {
+          Sid    = "ElastiCacheViaService"
+          Effect = "Allow"
+          Principal = {
+            AWS = "*"
+          }
+          Action = [
+            "kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt*",
+            "kms:GenerateDataKey*", "kms:CreateGrant", "kms:DescribeKey"
+          ]
+          Resource = "*"
+          Condition = {
+            StringEquals = {
+              "kms:CallerAccount" = "${var.project.account_id}"
+              "kms:ViaService"    = "elasticache.${var.project.region}.amazonaws.com"
+            }
+          }
+        },
+        # ECR
+        {
+          Sid    = "ECRViaService"
+          Effect = "Allow"
+          Principal = {
+            AWS = "*"
+          }
+          Action = [
+            "kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt*",
+            "kms:GenerateDataKey*", "kms:CreateGrant", "kms:DescribeKey"
+          ]
+          Resource = "*"
+          Condition = {
+            StringEquals = {
+              "kms:CallerAccount" = "${var.project.account_id}"
+              "kms:ViaService"    = "ecr.${var.project.region}.amazonaws.com"
             }
           }
         },

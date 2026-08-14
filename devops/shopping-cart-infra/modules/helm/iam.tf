@@ -25,8 +25,6 @@
 # }
 
 resource "aws_iam_role" "argocd" {
-  count = var.helm_enable_addons.argocd ? 1 : 0
-
   name               = "${var.project.env}-${var.project.name}-argocd"
   assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
 
@@ -36,10 +34,8 @@ resource "aws_iam_role" "argocd" {
 }
 
 resource "aws_iam_role_policy" "argocd" {
-  count = var.helm_enable_addons.argocd ? 1 : 0
-
   name = "${var.project.env}-${var.project.name}-argocd"
-  role = aws_iam_role.argocd[0].id
+  role = aws_iam_role.argocd.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -48,7 +44,10 @@ resource "aws_iam_role_policy" "argocd" {
         {
           Effect   = "Allow"
           Action   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
-          Resource = "arn:aws:secretsmanager:${var.project.region}:${var.project.account_ids[0]}:secret:${var.project.env}-${var.project.name}-*"
+          Resource = [
+            "${aws_secretsmanager_secret.helm-addon.arn}",
+            "${aws_secretsmanager_secret.helm-git-token.arn}",
+          ]
         },
         {
           Effect   = "Allow"
@@ -56,14 +55,14 @@ resource "aws_iam_role_policy" "argocd" {
           Resource = "*"
         },
       ],
-      var.enable_kms ? [{
+      [{
         Effect = "Allow"
         Action = [
           "kms:Decrypt",
           "kms:DescribeKey",
         ]
-        Resource = var.kms_key_arn
-      }] : [],
+        Resource = var.helm_kms_key
+      }],
     )
   })
 }
@@ -340,8 +339,6 @@ resource "aws_iam_role_policy_attachment" "alb_controller" {
 # }
 
 resource "aws_iam_role" "cluster_autoscaler" {
-  count = var.helm_enable_addons.cluster_autoscaler ? 1 : 0
-
   name               = "${var.project.env}-${var.project.name}-cluster-autoscaler"
   assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
 
@@ -351,10 +348,8 @@ resource "aws_iam_role" "cluster_autoscaler" {
 }
 
 resource "aws_iam_role_policy" "cluster_autoscaler" {
-  count = var.helm_enable_addons.cluster_autoscaler ? 1 : 0
-
   name = "${var.project.env}-${var.project.name}-cluster-autoscaler"
-  role = aws_iam_role.cluster_autoscaler[0].id
+  role = aws_iam_role.cluster_autoscaler.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -412,8 +407,6 @@ resource "aws_iam_role_policy" "cluster_autoscaler" {
 # }
 
 resource "aws_iam_role" "karpenter" {
-  count = var.helm_enable_addons.karpenter ? 1 : 0
-
   name               = "${var.project.env}-${var.project.name}-karpenter"
   assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
 
@@ -423,9 +416,8 @@ resource "aws_iam_role" "karpenter" {
 }
 
 resource "aws_iam_role_policy" "karpenter" {
-  count = var.helm_enable_addons.karpenter ? 1 : 0
-  name  = "${var.project.env}-${var.project.name}-karpenter"
-  role  = aws_iam_role.karpenter[0].id
+  name = "${var.project.env}-${var.project.name}-karpenter"
+  role = aws_iam_role.karpenter.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -436,6 +428,7 @@ resource "aws_iam_role_policy" "karpenter" {
           "ec2:CreateLaunchTemplate", "ec2:DeleteLaunchTemplate",
           "ec2:RunInstances", "ec2:TerminateInstances",
           "ec2:DescribeInstances", "ec2:DescribeInstanceTypes",
+          "ec2:DescribeInstanceTypeOfferings",
           "ec2:DescribeSubnets", "ec2:DescribeSecurityGroups",
           "ec2:DescribeLaunchTemplates", "ec2:DescribeSpotPriceHistory",
           "ec2:CreateTags", "ec2:DeleteTags",
@@ -448,8 +441,36 @@ resource "aws_iam_role_policy" "karpenter" {
       },
       {
         Effect   = "Allow"
-        Action   = ["sqs:DeleteMessage", "sqs:GetQueueUrl", "sqs:ReceiveMessage"]
-        Resource = "arn:aws:sqs:${var.project.region}:${var.project.account_ids[0]}:${var.helm_eks_cluster_id}"
+        Action = [
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:GetQueueUrl",
+          "sqs:ReceiveMessage",
+        ]
+        Resource = "${aws_sqs_queue.karpenter.arn}*"
+      }
+    ]
+  })
+}
+
+# Interruption Queue Policy 
+resource "aws_sqs_queue_policy" "karpenter" {
+  queue_url = aws_sqs_queue.karpenter.url
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EC2InterruptionPolicy"
+        Effect = "Allow"
+        Principal = {
+          Service = [
+            "events.amazonaws.com",
+            "sqs.amazonaws.com",
+          ]
+        }
+        Action   = "sqs:SendMessage"
+        Resource = "${aws_sqs_queue.karpenter.arn}*"
       }
     ]
   })

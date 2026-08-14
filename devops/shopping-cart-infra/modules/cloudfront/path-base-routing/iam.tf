@@ -20,8 +20,6 @@ resource "aws_s3_bucket_policy" "policy" {
 
 #====================== S3 Full Access Policy =======================#
 resource "aws_iam_policy" "full" {
-  count = var.cf_create_full_access_policy ? 1 : 0
-
   name        = format("%s-s3-full-access-policy", aws_s3_bucket.s3.id)
   description = format("%s-s3-full-access-policy", aws_s3_bucket.s3.id)
   path        = "/"
@@ -33,16 +31,12 @@ resource "aws_iam_policy" "full" {
         Action = ["s3:*"]
         Effect = "Allow"
         Resource = [
-          format("arn:aws:s3:::%s", aws_s3_bucket.s3.id),
-          format("arn:aws:s3:::%s/*", aws_s3_bucket.s3.id),
+          format("arn:aws:s3:::%s", "${aws_s3_bucket.s3.id}"),
+          format("arn:aws:s3:::%s/*", "${aws_s3_bucket.s3.id}"),
         ]
       },
     ]
   })
-}
-
-output "full_access_policy_arn" {
-  value = aws_iam_policy.full[0].arn
 }
 
 #====================== CloudFront Invalidation Policy =======================#

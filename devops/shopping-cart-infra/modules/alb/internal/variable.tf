@@ -6,9 +6,9 @@ variable "project" {
     name        = string
     env         = string
     region      = string
-    account_ids = list(string)
+    account_id  = string
   })
-  description = "Project metadata (env, name, region, account_ids)"
+  description = "Project configuration"
 }
 
 variable "tags" {
@@ -28,19 +28,12 @@ variable "subnet_ids" {
   description = "Subnet ids"
 }
 
-variable "dns_cert_arn" {
+variable "alb_dns_cert" {
   type        = string
-  description = "Dns cert arn"
+  description = "ALB DNS certificate ARN"
 }
 
 variable "source_ingress_sg_cidr" {
   type        = list(string)
-  description = "Source ingress sg cidr"
+  description = "Source ingress security group CIDR"
 }
-
-#================ ALB =================#
-variable "lb_name" {
-  type        = string
-  description = "Lb name"
-}
-

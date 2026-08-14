@@ -8,11 +8,11 @@ externalSecrets:
   secretName: lab-shopping-cart-helm-addon-credentials
 
 grafana:
-  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-grafana/27c37ff5e8d34a06"
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-grafana/73bace0f42bcb796"
 
 tls:
   issuerName: selfsigned-issuer
-  grafanaHostname: grafana.shopping-cart.jayce-lab.works
+  grafanaHostname: grafana.lab-shopping-cart.jayce-lab.works
 
 #======================= Kube Prometheus Stack ==========================#
 kube-prometheus-stack:

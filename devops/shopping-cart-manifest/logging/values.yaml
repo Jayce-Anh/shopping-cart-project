@@ -9,14 +9,14 @@ externalSecrets:
 
 tls:
   issuerName: selfsigned-issuer
-  kibanaHostname: kibana.shopping-cart.jayce-lab.works
+  kibanaHostname: kibana.lab-shopping-cart.jayce-lab.works
 
 ingress:
   enabled: false
 
 targetGroupBinding:
   enabled: true
-  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-kibana/4d2fbcddff416e5f"
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-kibana/637b80664a3dedbe"
 
 #======================= EFK =========================#
 efk:

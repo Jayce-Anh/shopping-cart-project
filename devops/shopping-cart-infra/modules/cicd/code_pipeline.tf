@@ -1,16 +1,18 @@
-#-------------------------- S3 Bucket for CodePipeline artifact -------------------------- 
+################################# CICD - CODE PIPELINE #################################
+
+#================= S3 Bucket =================#
 resource "aws_s3_bucket" "bucket_artifact" {
-  bucket        = "${var.project.env}-${var.project.name}-${var.pipeline_name}-codepipeline-bucket"
-  force_destroy = var.s3_force_del
+  bucket        = "${var.project.env}-${var.project.name}-codepipeline"
+  force_destroy = true
   tags = merge(var.tags, {
-    Name = "${var.project.env}-${var.project.name}-${var.pipeline_name}-codepipeline-bucket"
+    Name = "${var.project.env}-${var.project.name}-codepipeline"
     Env  = "${var.project.env}"
   })
 }
 
-#-------------------------- CodePipeline --------------------------
+#================= CodePipeline =================#
 resource "aws_codepipeline" "codepipeline" {
-  name     = "${var.project.env}-${var.project.name}-${var.pipeline_name}-pipeline"
+  name     = "${var.project.env}-${var.project.name}"
   role_arn = aws_iam_role.pipeline_role.arn
 
   artifact_store {
@@ -31,10 +33,10 @@ resource "aws_codepipeline" "codepipeline" {
       output_artifacts = ["Source_Artifacts"]
 
       configuration = {
-        Owner      = var.git_org
-        Repo       = var.git_repo
-        Branch     = var.git_branch
-        OAuthToken = var.git_token
+        Owner      = var.git_config.org
+        Repo       = var.git_config.repo
+        Branch     = var.git_config.branch
+        OAuthToken = var.git_config.token
       }
     }
   }
@@ -59,55 +61,28 @@ resource "aws_codepipeline" "codepipeline" {
   }
 
   #Conditional Deploy Stage (only for ECS deployments)
-  dynamic "stage" {
-    for_each = var.enable_ecs_deploy ? [1] : []
-    content {
-      name = "Deploy"
-      action {
-        name            = "Deploy"
-        category        = "Deploy"
-        owner           = "AWS"
-        provider        = "ECS"
-        input_artifacts = ["Build_Artifacts"]
-        version         = "1"
-        configuration = {
-          DeploymentTimeout = "20"
-          ClusterName       = var.ecs_cluster_name
-          ServiceName       = var.ecs_service_name
-          FileName          = "artifact.json"
-        }
+  stage {
+    name = "Deploy"
+    
+    action {
+      name            = "Deploy"
+      category        = "Deploy"
+      owner           = "AWS"
+      provider        = "ECS"
+      input_artifacts = ["Build_Artifacts"]
+      version         = "1"
+      configuration = {
+        DeploymentTimeout = "20"
+        ClusterName       = ""
+        ServiceName       = ""
+        FileName          = "artifact.json"
       }
     }
   }
-
-  # #Deploy Stage (CodeDeploy)
-  #   stage {
-  #     name = "Deploy"
-
-  #     action {
-  #       name             = "Deploy"
-  #       category         = "Deploy"
-  #       owner            = "AWS"
-  #       provider         = "CodeDeploy"
-  #       input_artifacts  = ["Build_Artifacts"]
-  #       output_artifacts = ["Deploy_Artifacts"]
-  #       version          = "1"
-
-  #       configuration = {
-  #         ApplicationName = var.application_name # CodeDeploy application name
-  #         DeploymentGroupName = var.deployment_group_name # CodeDeploy deployment group name
-  #       }
-  #     }
-  #   }
-
 }
 
-# A shared secret between GitHub and AWS that allows AWS
-# CodePipeline to authenticate the request came from GitHub.
-# Would probably be better to pull this from the environment
-# or something like SSM Parameter Store.
-
-#Generate a random secret token for the CodePipeline webhook
+#================= Webhook =================#
+# Generate a random secret token for the CodePipeline webhook
 resource "random_string" "secret_token" {
   length  = 99
   special = false
@@ -115,7 +90,7 @@ resource "random_string" "secret_token" {
 
 #CodePipeline webhook
 resource "aws_codepipeline_webhook" "bar" {
-  name            = "${var.project.name}-${var.project.env}-${var.pipeline_name}-webhook"
+  name            = "${var.project.name}-${var.project.env}-webhook"
   authentication  = "GITHUB_HMAC"
   target_action   = "Source"
   target_pipeline = aws_codepipeline.codepipeline.name

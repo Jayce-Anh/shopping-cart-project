@@ -1,8 +1,9 @@
 ################################### CODE PIPELINE/BUILD/DEPLOY - IAM ############################################
 
-#-------------------------- CodePipeline Role --------------------------
+#================= CodePipeline =================#
+# Role
 resource "aws_iam_role" "pipeline_role" {
-  name = "${var.project.env}-${var.project.name}-${var.pipeline_name}-codepipeline-role"
+  name = "${var.project.env}-${var.project.name}-codepipeline"
 
   assume_role_policy = <<EOF
 {
@@ -20,7 +21,7 @@ resource "aws_iam_role" "pipeline_role" {
 EOF
 }
 
-#CodePipeline Policy
+# Policy
 resource "aws_iam_role_policy" "codepipeline_policy" {
   role = aws_iam_role.pipeline_role.id
 
@@ -199,9 +200,10 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
   })
 }
 
-#-------------------------- CodeBuild Role --------------------------
+#================= CodeBuild =================#
+# Role
 resource "aws_iam_role" "codebuild_role" {
-  name = "${var.project.name}-${var.project.env}-${var.pipeline_name}-codebuild-role"
+  name = "${var.project.env}-${var.project.name}-codebuild"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -217,7 +219,7 @@ resource "aws_iam_role" "codebuild_role" {
 
 }
 
-#CodeBuild Policy
+# Policy
 resource "aws_iam_role_policy" "s3_policy_cicd" {
   role = aws_iam_role.codebuild_role.name
 
@@ -307,39 +309,38 @@ resource "aws_iam_role_policy" "s3_policy_cicd" {
   )
 }
 
-#-------------------------- CodeDeploy Role (optional) --------------------------
-resource "aws_iam_role" "codedeploy_role" {
-  count = var.enable_codedeploy ? 1 : 0
+#================= CodeDeploy =================#
+# # Role
+# resource "aws_iam_role" "codedeploy_role" {
+#   name               = "${var.project.env}-${var.project.name}-codedeploy"
+#   assume_role_policy = <<EOF
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Sid": "",
+#       "Effect": "Allow",
+#       "Principal": {
+#         "Service": "codedeploy.amazonaws.com"
+#       },
+#       "Action": "sts:AssumeRole"
+#     }
+#   ]
+# }
+# EOF
+# }
 
-  name               = "${var.project.name}-${var.project.env}-${var.pipeline_name}-codedeploy-role"
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "codedeploy.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
-}
+# # Policy
+# resource "aws_iam_role_policy_attachment" "AWSCodeDeployRole" {
+#   count = var.enable_codedeploy ? 1 : 0
 
-#CodeDeploy Policy
-resource "aws_iam_role_policy_attachment" "AWSCodeDeployRole" {
-  count = var.enable_codedeploy ? 1 : 0
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
+#   role       = aws_iam_role.codedeploy_role[0].name
+# }
 
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
-  role       = aws_iam_role.codedeploy_role[0].name
-}
+# resource "aws_iam_role_policy_attachment" "AWSCodeDeployRoleForECS" {
+#   count = var.enable_codedeploy ? 1 : 0
 
-resource "aws_iam_role_policy_attachment" "AWSCodeDeployRoleForECS" {
-  count = var.enable_codedeploy ? 1 : 0
-
-  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
-  role       = aws_iam_role.codedeploy_role[0].name
-}
+#   policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
+#   role       = aws_iam_role.codedeploy_role[0].name
+# }

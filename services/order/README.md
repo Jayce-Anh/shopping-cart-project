@@ -9,7 +9,6 @@ Order accepts a cart checkout (customer email, address, and line items), stores 
 Order does not hold product catalog data or live stock. Catalog owns products. Inventory owns quantity.
 
 In the shopping-cart flow:
-
 1. Web UI posts the cart to `POST /api/orders`.
 2. Order saves the order and items in MySQL.
 3. Order publishes the event to SQS (lab/compose profiles).
@@ -38,4 +37,4 @@ Request body for create:
 
 ## Stack
 
-Java 8, Spring Boot, Spring Data JPA, Spring Cloud AWS (SQS), MySQL.
+Java 8, Spring Boot, Spring Data JPA, Spring Cloud AWS (SQS), MySQL (RDS).

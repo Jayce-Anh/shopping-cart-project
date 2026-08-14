@@ -81,7 +81,7 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
 | Cloud | AWS (VPC, EC2, EKS, ECR, ALB, CloudFront, S3, Route53, ACM, RDS, ElastiCache, SQS, KMS, Secrets Manager, IAM) |
 | IaC | Terraform |
 | CI/CD | GitLab CI, GitLab OIDC → AWS IAM, EC2 GitLab Runner |
-| GitOps | ArgoCD + Helm manifests (`shopping-cart-manifest`) |
+| GitOps | ArgoCD + Helm manifests (`devops/shopping-cart-manifest`) |
 | Backend | Java 8, Spring Boot, Maven, MySQL, Valkey/Redis, AWS SQS |
 | Frontend | React 18, Vite, nginx; hosted on S3 + CloudFront |
 | Logging | EFK (Elasticsearch, Fluentd, Kibana) |
@@ -101,14 +101,24 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
 
 ### 4. Repository
 
-- Clone the repositories from GitHub, then create new projects in GitLab.
+This lab uses **one Git repository** that stores all source code (services and DevOps).
+
+```
+shopping-cart-project/
+├── services/
+│   ├── catalog/                 # Catalog microservice
+│   ├── inventory/               # Inventory microservice
+│   ├── order/                   # Order microservice
+│   └── web-ui/                  # React web UI
+├── devops/
+│   ├── shopping-cart-infra/     # Terraform modules for AWS
+│   └── shopping-cart-manifest/  # Helm charts and ArgoCD manifests
+├── docs/
+└── README.md
+```
+
+- Clone this repository, then create a matching project in GitLab.
 - Note: You can choose GitHub or GitLab as the source code management and CI/CD system. This lab uses GitLab.
-  - `shopping-cart-infra`: Terraform modules for AWS infrastructure
-  - `shopping-cart-manifest`: Helm charts and ArgoCD application manifests
-  - `shopping-cart-catalog`: Catalog microservice
-  - `shopping-cart-inventory`: Inventory microservice
-  - `shopping-cart-order`: Order microservice
-  - `shopping-cart-web-ui`: React web UI
 
 ## III. Prerequisites
 
@@ -126,14 +136,14 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
 
 ### GitLab account
 
-- Clone the repositories from GitHub, then create new projects in GitLab.
-- Create a GitLab groups `Services` for frontend, backend and `DevOps` for infrastructure and manifest.
+- Clone this repository, then create one GitLab project for the shopping-cart source code.
+- Use the folders in this repo: `services/` for frontend and backend, `devops/` for infrastructure and manifests.
 
 <img src="docs/images/image3.png" alt="GitLab group and repositories" width="800" />
 
 ### Local setup
 
-- Clone the repositories and set up the folder structure.
+- Clone this repository. The folder structure is already in the repo.
 
 <img src="docs/images/image7.png" alt="Local repository folder structure" width="300" />
 
@@ -208,10 +218,14 @@ terraform apply
 | Secrets Manager | App and platform secrets | Stores RDS credentials, Helm git token, GitLab runner token, and addon passwords (ArgoCD, Grafana, Elastic) |
 | Valkey | ElastiCache Valkey 7.2 (`cache.t4g.micro`, port 6379) | In-memory cache for catalog and inventory services |
 | EKS | EKS 1.35 + managed node group | Kubernetes cluster in private subnets; Spot nodes (`t3`/`t3a.medium`, desired 3) |
-| Helm | AWS Load Balancer Controller, ArgoCD, cert-manager, Cluster Autoscaler, External Secrets, Pod Identity (inventory, order) | Installs cluster addons: ALB target group binding, GitOps sync from `shopping-cart-manifest`, node autoscaling, Secrets Manager sync, and SQS IAM roles for service accounts |
+| Helm | AWS Load Balancer Controller, ArgoCD, cert-manager, Cluster Autoscaler, External Secrets, Pod Identity (inventory, order) | Installs cluster addons: ALB target group binding, GitOps sync from `devops/shopping-cart-manifest`, node autoscaling, Secrets Manager sync, and SQS IAM roles for service accounts |
+
+- Update RDS, Redis endpoints, SQS URLs, ... in the `.env.example` files under `services/` (`catalog`, `inventory`, `order`, `web-ui`).
+
+<img src="docs/images/image59.png" alt="Env.example files" width="800" />
 
 ### 4. Setup GitLab
-- Create an environment for each project: `lab` on their protected **main** branch
+- Create an environment `lab` on the protected **main** branch.
 
 <img src="docs/images/image57.png" alt="GitLab environment" width="800" />
 
@@ -225,18 +239,18 @@ terraform apply
 
 | Variable | Groups / services used | Description |
 | -------- | ---------------------- | ----------- |
-| APP_ENV | Services | Copy values from `.env.example` in the service repositories |
+| APP_ENV | Services | Copy values from `.env.example` in each service directory |
 | ARGOCD_PASSWORD | Services | Password stored in the `lab-shopping-cart-helm-addon-credentials` secret |
 | ARGOCD_URL | Services | Hostname of ArgoCD |
 | AWS_ECR | Services | ECR repository ARN |
 | AWS_ROLE | Services, DevOps | GitLab OIDC provider IAM role |
-| HELM_REPO_URL | Services | HTTPS URL of the `shopping-cart-manifest` repository |
-| HELM_REPO_TOKEN | Services | Access token for the `shopping-cart-manifest` repository |
+| HELM_REPO_URL | Services | HTTPS URL of this GitLab project (manifests live in `devops/shopping-cart-manifest`) |
+| HELM_REPO_TOKEN | Services | Access token for this GitLab project |
 | AWS_REGION | Services, DevOps | AWS region for the project |
 | AWS_S3 | Services (web-ui) | Origin S3 bucket ARN |
 | AWS_DISTRIBUTION_ID | Services (web-ui) | CloudFront distribution ID |
 
-- In GitLab, create a fine-grained token scoped to the `shopping-cart-manifest` repository with read and write access for commits.
+- In GitLab, create a fine-grained token for this project with read and write access for commits (used to update Helm values in `devops/shopping-cart-manifest`).
 
 <img src="docs/images/image17.png" alt="GitLab fine-grained access token" width="800" />
 
@@ -246,7 +260,7 @@ terraform apply
 
 ### 5. Configure GitLab runner for CI/CD
 
-- Authenticate the GitLab OIDC provider with AWS. Use the `lab-shopping-cart-gitlab-runner-provider` ARN to create temporary AWS credentials for the GitLab runner Docker executor. Copy the IAM role ARN into the `AWS_ROLE` variable in each GitLab repository that needs it.
+- Authenticate the GitLab OIDC provider with AWS. Use the `lab-shopping-cart-gitlab-runner-provider` ARN to create temporary AWS credentials for the GitLab runner Docker executor. Copy the IAM role ARN into the `AWS_ROLE` variable in this GitLab project.
 
 <img src="docs/images/image19.png" alt="GitLab OIDC IAM role" width="800" />
 
@@ -256,6 +270,17 @@ terraform apply
 
 - Register the GitLab runner on EC2 using the runner registration token, then store it in the `lab-shopping-cart-gitlab-runner-token` secret.
 
+``` bash
+sudo gitlab-runner register  --url https://gitlab.com  --token <gitlab-runner-registration-token>
+# Defaul: https://gitlab.com -> Press Enter
+shopping-cart
+docker
+alpine:latest
+sudo systemctl status gitlab-runner
+sudo systemctl start gitlab-runner
+sudo systemctl enable gitlab-runner
+```
+
 <img src="docs/images/image21.png" alt="GitLab runner registration token" width="800" />
 
 <img src="docs/images/image22.png" alt="Runner token secret" width="800" />
@@ -264,7 +289,7 @@ terraform apply
 
 <img src="docs/images/image23.png" alt="Infrastructure pipeline overview" width="800" />
 
-- Push changes to the `shopping-cart-infra` repository.
+- Push Terraform changes under `devops/shopping-cart-infra`.
 - Verify the `terraform-plan` job, then run the `terraform-apply` job manually.
 
 <img src="docs/images/image24.png" alt="Terraform plan and apply jobs" width="800" />
@@ -305,7 +330,7 @@ terraform apply
 
 ### 8. Deploy the web application
 
-- Commit and push changes to all service repositories:
+- Commit and push service changes under `services/`:
 
 <img src="docs/images/image34.png" alt="Service repository changes" width="800" />
 
@@ -365,7 +390,7 @@ terraform apply
 
 <img src="docs/images/image51.png" alt="Update Slack webhook secret" width="800" />
 
-- In the `shopping-cart-manifest` repository, commit and push the changes. Result:
+- Commit and push the changes under `devops/shopping-cart-manifest`. Result:
 
 <img src="docs/images/image52.png" alt="Slack alert result" width="800" />
 

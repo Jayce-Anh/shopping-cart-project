@@ -17,9 +17,9 @@ catalog:
   maxSurge: 1
   maxUnavailable: 0
   image: "701604998432.dkr.ecr.ap-southeast-1.amazonaws.com/lab-shopping-cart-catalog"
-  tag: "73037aed4f66b4c375a812a7dd47427a77d64972"
+  tag: "09ce813340b7023a6f242d92e788098072ed03b0"
   port: 4000
-  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-catalog/0606e9636af917f6"
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-catalog/2b4f37dca9701e1a"
   resources:
     requests:
       cpu: "0.5"
@@ -35,9 +35,9 @@ inventory:
   maxSurge: 1
   maxUnavailable: 0
   image: "701604998432.dkr.ecr.ap-southeast-1.amazonaws.com/lab-shopping-cart-inventory"
-  tag: "f02670cc1bdc2491b8cffd927d0bfd4c08afcfc1"
+  tag: "15181008dd6722232ba2a5ed829ee21dfecfaa6f"
   port: 5000
-  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-inventory/735e25a683c0afa1"
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-inventory/8661dbc0b032cdd8"
   resources:
     requests:
       cpu: "0.5"
@@ -55,7 +55,7 @@ order:
   image: "701604998432.dkr.ecr.ap-southeast-1.amazonaws.com/lab-shopping-cart-order"
   tag: "0214a9213d4598bd7ba42d13975658be0676e2cc"
   port: 6000
-  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-order/dcfb299231deb0df"
+  targetGroupArn: "arn:aws:elasticloadbalancing:ap-southeast-1:701604998432:targetgroup/lab-shopping-cart-order/284b6aced33586cd"
   resources:
     requests:
       cpu: "0.5"

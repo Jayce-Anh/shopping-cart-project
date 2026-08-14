@@ -6,13 +6,11 @@ resource "helm_release" "load_balancer_controller" {
   chart            = "aws-load-balancer-controller"
   namespace        = "kube-system"
   create_namespace = false
-  version          = var.helm_lbc_version
-
 
   set = [
     {
       name  = "clusterName"
-      value = var.helm_eks_cluster_id
+      value = "${var.helm_eks_cluster}"
     },
     {
       name  = "serviceAccount.name"
@@ -20,7 +18,7 @@ resource "helm_release" "load_balancer_controller" {
     },
     {
       name  = "vpcId"
-      value = var.helm_vpc_id
+      value = "${var.helm_vpc_id}"
     },
     {
       name  = "region"
@@ -30,7 +28,7 @@ resource "helm_release" "load_balancer_controller" {
 
   timeout = 300
   wait    = true
-  
+
   depends_on = [
     aws_iam_role_policy_attachment.alb_controller,
     aws_eks_pod_identity_association.alb_controller,

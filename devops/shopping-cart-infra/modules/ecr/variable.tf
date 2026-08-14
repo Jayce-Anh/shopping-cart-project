@@ -1,14 +1,12 @@
-############################ VARIABLES ############################
+############################ ECR VARIABLE ############################
 
 #================ Project =================#
 variable "project" {
   type = object({
-    name        = string
-    env         = string
-    region      = string
-    account_ids = list(string)
+    name = string
+    env  = string
   })
-  description = "Project metadata (env, name, region, account_ids)"
+  description = "Project metadata (env, name)"
 }
 
 variable "tags" {
@@ -16,18 +14,7 @@ variable "tags" {
   description = "Common tags applied to all resources"
 }
 
-#============== ECR ===============#
-variable "ecr_services" {
-  type = map(object({
-    name             = string
-    keep_nums_images = optional(number, 10)
-    force_del        = optional(bool, false)
-  }))
-  description = "Map of ECR services to per-repo settings"
-}
-
-variable "kms_key_arn" {
+variable "ecr_kms_key" {
   type        = string
-  default     = null
-  description = "KMS key ARN for ECR image encryption (null = AES256)"
+  description = "KMS key ARN for ECR image encryption"
 }

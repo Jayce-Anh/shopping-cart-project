@@ -1,23 +1,20 @@
 ############################ CLUSTER AUTOSCALER HELM RELEASE ############################
 
 resource "helm_release" "cluster_autoscaler" {
-  count = var.helm_enable_addons.cluster_autoscaler ? 1 : 0
-
   name             = "cluster-autoscaler"
   repository       = "https://kubernetes.github.io/autoscaler"
   chart            = "cluster-autoscaler"
   namespace        = "kube-system"
   create_namespace = false
-  version          = var.helm_ca_version
 
   set = [
     {
       name  = "autoDiscovery.clusterName"
-      value = var.helm_eks_cluster_id
+      value = var.helm_eks_cluster
     },
     {
       name  = "awsRegion"
-      value = "${var.project.region}"
+      value = var.project.region
     },
     {
       name  = "rbac.serviceAccount.name"

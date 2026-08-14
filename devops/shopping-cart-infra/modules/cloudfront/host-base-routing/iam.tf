@@ -1,7 +1,6 @@
 ################################# IAM #################################
 
 #====================== CloudFront S3 Bucket Policy =======================#
-
 #CloudFront S3 Bucket Policy
 data "aws_iam_policy_document" "policy_doc" {
   # type = "CanonicalUser"
@@ -26,8 +25,6 @@ resource "aws_s3_bucket_policy" "policy" {
 
 #Full Access Policy
 resource "aws_iam_policy" "full" {
-  count = var.cf_create_full_access_policy ? 1 : 0
-
   name        = format("%s-s3-full-access-policy", aws_s3_bucket.s3.id)
   description = format("%s-s3-full-access-policy", aws_s3_bucket.s3.id)
   path        = "/"
@@ -41,16 +38,12 @@ resource "aws_iam_policy" "full" {
         ]
         Effect = "Allow"
         Resource = [
-          format("arn:aws:s3:::%s", aws_s3_bucket.s3.id),
-          format("arn:aws:s3:::%s/*", aws_s3_bucket.s3.id),
+          format("arn:aws:s3:::%s", "${aws_s3_bucket.s3.id}"),
+          format("arn:aws:s3:::%s/*", "${aws_s3_bucket.s3.id}"),
         ]
       },
     ]
   })
-}
-
-output "full_access_policy_arn" {
-  value = aws_iam_policy.full[0].arn
 }
 
 #====================== CloudFront Invalidation Policy =======================#
@@ -65,7 +58,7 @@ resource "aws_iam_policy" "invalidation" {
         Action = [
           "cloudfront:CreateInvalidation",
         ]
-        Resource = [aws_cloudfront_distribution.cf_distribution.arn]
+        Resource = ["${aws_cloudfront_distribution.cf_distribution.arn}"]
       },
     ]
   })

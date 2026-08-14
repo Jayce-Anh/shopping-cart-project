@@ -1,4 +1,4 @@
-############################# OUTPUT #################################
+############################# ELASTICACHE OUTPUT #################################
 output "cache_replication_group_id" {
   value = aws_elasticache_replication_group.cache.id
 }

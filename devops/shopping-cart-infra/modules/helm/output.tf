@@ -2,7 +2,7 @@
 
 output "argocd_role_arn" {
   description = "IAM role ARN for ArgoCD"
-  value       = var.helm_enable_addons.argocd ? aws_iam_role.argocd[0].arn : null
+  value       = aws_iam_role.argocd.arn
 }
 
 output "lbc_role_arn" {
@@ -12,5 +12,10 @@ output "lbc_role_arn" {
 
 output "ca_role_arn" {
   description = "IAM role ARN for Cluster Autoscaler"
-  value       = var.helm_enable_addons.cluster_autoscaler ? aws_iam_role.cluster_autoscaler[0].arn : null
+  value       = aws_iam_role.cluster_autoscaler.arn
+}
+
+output "karpenter_role_arn" {
+  description = "IAM role ARN for Karpenter"
+  value       = aws_iam_role.karpenter.arn
 }

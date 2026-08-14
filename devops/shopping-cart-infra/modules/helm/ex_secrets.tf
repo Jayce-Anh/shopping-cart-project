@@ -1,8 +1,6 @@
 ########################### EXTERNAL SECRETS HELM RELEASE ###########################
 
 resource "helm_release" "external_secrets" {
-  count = var.helm_enable_addons.ex_secrets ? 1 : 0
-
   name             = "external-secrets"
   repository       = "https://charts.external-secrets.io"
   chart            = "external-secrets"
