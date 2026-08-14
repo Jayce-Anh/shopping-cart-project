@@ -178,7 +178,6 @@ terraform apply --target=module.acm
 
 - **Route53:** Manage the root domain `jayce-lab.works`.
 - **ACM (ALB):** `*.lab-shopping-cart.jayce-lab.works` from `module.acm`.
-- **ACM (CloudFront):** `lab-shopping-cart.jayce-lab.works` is created later with `module.cloudfront` in `us-east-1`.
 
 <img src="docs/images/image11.png" alt="ACM certificates" width="600" />
 
@@ -192,11 +191,10 @@ terraform apply --target=module.acm
 
 - In the ALB certificate, choose **Create record in Route53**.
 
-- Wait until the domain transfer completes for both ALB and CloudFront certificates to validate successfully (about 15–30 minutes).
+- Wait until the domain transfer completes and the ALB certificate validates successfully (about 10–30 minutes).
 
 <img src="docs/images/image14.png" alt="Validated ACM certificates" width="800" />
 
-<img src="docs/images/image15.png" alt="Validated domain status" width="800" />
 
 ### 3. Deploy the rest of the services
 
