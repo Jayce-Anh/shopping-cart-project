@@ -192,13 +192,11 @@ terraform apply --target=module.acm
 
 - In the ALB certificate, choose **Create record in Route53**.
 
-<img src="docs/images/image14.png" alt="Create ACM DNS validation record" width="800" />
+- Wait until the domain transfer completes for both ALB and CloudFront certificates to validate successfully (about 15–30 minutes).
 
-- Wait until the domain transfer completes and both certificates validate successfully (about 15–30 minutes).
+<img src="docs/images/image14.png" alt="Validated ACM certificates" width="800" />
 
-<img src="docs/images/image15.png" alt="Validated ACM certificates" width="800" />
-
-<img src="docs/images/image16.png" alt="Validated domain status" width="800" />
+<img src="docs/images/image15.png" alt="Validated domain status" width="800" />
 
 ### 3. Deploy the rest of the services
 
