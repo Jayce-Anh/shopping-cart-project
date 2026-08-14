@@ -96,7 +96,7 @@ Internet-facing hostnames use `lab-shopping-cart.jayce-lab.works`.
 | Catalog-service | 4000 | `https://lab-shopping-cart.jayce-lab.works/api/products` | Product catalog API; enriches stock via Inventory; caches with Valkey |
 | Inventory-service | 5000 | `https://lab-shopping-cart.jayce-lab.works/api/inventory` | Inventory API; consumes order events from SQS |
 | Order-service | 6000 | `https://lab-shopping-cart.jayce-lab.works/api/orders` | Orders API; publishes order events to SQS |
-| Web-ui-service | 80 | `https://lab-shopping-cart.jayce-lab.works` | React SPA; CloudFront + S3 |
+| Web-ui-service | 443 | `https://lab-shopping-cart.jayce-lab.works` | React SPA; CloudFront + S3 (HTTPS) |
 | ArgoCD | 8080 | `https://argocd.lab-shopping-cart.jayce-lab.works` | GitOps console |
 | Kibana | 5601 | `https://kibana.lab-shopping-cart.jayce-lab.works` | Log search and dashboards (EFK) |
 | Grafana | 8090 | `https://grafana.lab-shopping-cart.jayce-lab.works` | Metrics dashboards (Kube-Prometheus) |
