@@ -89,36 +89,39 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
 
 ### 3. Services
 
-| Service | Port | Description |
-| ------- | ---- | ----------- |
-| Catalog-service | 4000 | Product catalog API (`/api/products`); enriches stock via Inventory; caches with Valkey |
-| Inventory-service | 5000 | Inventory API (`/api/inventory`); consumes order events from SQS |
-| Order-service | 6000 | Orders API (`/api/orders`); publishes order events to SQS |
-| Web-ui-service | 80 | React SPA for browsing products, cart, and orders; served via S3 + CloudFront |
-| ArgoCD | 8080 | GitOps console for deploying and syncing Kubernetes apps |
-| Kibana | 5601 | Log search and dashboards (EFK) |
-| Grafana | 8090 | Metrics dashboards (Kube-Prometheus) |
+Internet-facing hostnames use `lab-shopping-cart.jayce-lab.works`.
+
+| Service | Port | Public hostname | Description |
+| ------- | ---- | --------------- | ----------- |
+| Catalog-service | 4000 | `https://lab-shopping-cart.jayce-lab.works/api/products` | Product catalog API; enriches stock via Inventory; caches with Valkey |
+| Inventory-service | 5000 | `https://lab-shopping-cart.jayce-lab.works/api/inventory` | Inventory API; consumes order events from SQS |
+| Order-service | 6000 | `https://lab-shopping-cart.jayce-lab.works/api/orders` | Orders API; publishes order events to SQS |
+| Web-ui-service | 80 | `https://lab-shopping-cart.jayce-lab.works` | React SPA; CloudFront + S3 |
+| ArgoCD | 8080 | `https://argocd.lab-shopping-cart.jayce-lab.works` | GitOps console |
+| Kibana | 5601 | `https://kibana.lab-shopping-cart.jayce-lab.works` | Log search and dashboards (EFK) |
+| Grafana | 8090 | `https://grafana.lab-shopping-cart.jayce-lab.works` | Metrics dashboards (Kube-Prometheus) |
 
 ### 4. Repository
 
-This lab uses **one Git repository** that stores all source code (services and DevOps).
+This GitHub repo stores all source code. GitLab CI/CD uses a **separate project per folder**.
 
 ```
 shopping-cart-project/
 ├── services/
-│   ├── catalog/                 # Catalog microservice
-│   ├── inventory/               # Inventory microservice
-│   ├── order/                   # Order microservice
-│   └── web-ui/                  # React web UI
+│   ├── catalog/                 # → GitLab: shopping-cart-catalog
+│   ├── inventory/               # → GitLab: shopping-cart-inventory
+│   ├── order/                   # → GitLab: shopping-cart-order
+│   └── web-ui/                  # → GitLab: shopping-cart-web-ui
 ├── devops/
-│   ├── shopping-cart-infra/     # Terraform modules for AWS
-│   └── shopping-cart-manifest/  # Helm charts and ArgoCD manifests
+│   ├── shopping-cart-infra/     # → GitLab: shopping-cart-infra
+│   └── shopping-cart-manifest/  # → GitLab: shopping-cart-manifest
 ├── docs/
 └── README.md
 ```
 
-- Clone this repository, then create a matching project in GitLab.
-- Note: You can choose GitHub or GitLab as the source code management and CI/CD system. This lab uses GitLab.
+- Clone this repository for the source tree.
+- Create matching GitLab projects from each folder above.
+- Note: You can choose GitHub or GitLab as the source code management and CI/CD system. This lab uses GitLab for CI/CD.
 
 ## III. Prerequisites
 
@@ -136,14 +139,15 @@ shopping-cart-project/
 
 ### GitLab account
 
-- Clone this repository, then create one GitLab project for the shopping-cart source code.
-- Use the folders in this repo: `services/` for frontend and backend, `devops/` for infrastructure and manifests.
+- This repo stores the source code. Copy each folder into its own GitLab project.
+- Create GitLab groups `Services` (catalog, inventory, order, web-ui) and `DevOps` (infra, manifest).
+- Each of these must be a separate GitLab project: `shopping-cart-infra`, `shopping-cart-manifest`, `shopping-cart-catalog`, `shopping-cart-inventory`, `shopping-cart-order`, `shopping-cart-web-ui`.
 
 <img src="docs/images/image3.png" alt="GitLab group and repositories" width="800" />
 
 ### Local setup
 
-- Clone this repository. The folder structure is already in the repo.
+- Clone this repository. Push each `services/` and `devops/` folder to its matching GitLab project.
 
 <img src="docs/images/image7.png" alt="Local repository folder structure" width="300" />
 
@@ -156,7 +160,7 @@ shopping-cart-project/
 
 ### 1. Setup S3 backend remote state
 
-Set up an S3 backend for Terraform state to avoid deployment conflicts and improve state management.
+Set up an S3 backend for Terraform state to avoid deployment conflicts and improve state management. Run this from `devops/shopping-cart-infra/remote-tfstate`.
 
 <img src="docs/images/image9.png" alt="Terraform remote state module" width="600" />
 
@@ -164,16 +168,17 @@ Set up an S3 backend for Terraform state to avoid deployment conflicts and impro
 
 ### 2. Deploy and configure Route53 Hosted Zone and ACM
 
-- Deploy the Route53 and ACM modules from the root module:
+- From `devops/shopping-cart-infra`, deploy Route53 and the ALB ACM certificate first:
 
 ```bash
-terraform apply --target=module.route53
-terraform apply --target=module.acm_alb
-terraform apply --target=module.acm_cf
+cd devops/shopping-cart-infra
+terraform apply --target=module.hosted_zone
+terraform apply --target=module.acm
 ```
 
 - **Route53:** Manage the root domain `jayce-lab.works`.
-- **ACM:** Issue a certificate for `*.shopping-cart.jayce-lab.works` (ALB) and `shopping-cart.jayce-lab.works` (CloudFront for web-ui).
+- **ACM (ALB):** `*.lab-shopping-cart.jayce-lab.works` from `module.acm`.
+- **ACM (CloudFront):** `lab-shopping-cart.jayce-lab.works` is created later with `module.cloudfront` in `us-east-1`.
 
 <img src="docs/images/image11.png" alt="ACM certificates" width="600" />
 
@@ -197,9 +202,10 @@ terraform apply --target=module.acm_cf
 
 ### 3. Deploy the rest of the services
 
-Deploy the remaining modules from `main.tf` (after Route53 and ACM):
+Deploy the remaining modules from `devops/shopping-cart-infra/main.tf` (after Route53 and ACM):
 
 ```bash
+cd devops/shopping-cart-infra
 terraform apply
 ```
 
@@ -212,20 +218,18 @@ terraform apply
 | GitLab Runner | EC2 + user data | EC2 instance that registers and runs GitLab CI jobs |
 | Runner IAM | GitLab OIDC IAM role | Lets GitLab CI assume an AWS role (`AWS_ROLE`) without long-lived keys |
 | ALB | External Application Load Balancer | HTTPS load balancer with target groups for catalog, inventory, order, ArgoCD, Grafana, and Kibana |
-| CloudFront | CloudFront + S3 origin | Hosts web-ui on S3; alias `shopping-cart.jayce-lab.works`; routes `/api/*` to ALB |
+| CloudFront | CloudFront + S3 origin | Hosts web-ui on S3; alias `lab-shopping-cart.jayce-lab.works`; routes `/api/*` to ALB |
 | SQS | `order-events` queue | Async queue for order → inventory event flow (KMS encrypted) |
 | RDS | MySQL 8.0 (`db.t4g.micro`, port 3306) | Shared MySQL database in private subnets for the microservices |
 | Secrets Manager | App and platform secrets | Stores RDS credentials, Helm git token, GitLab runner token, and addon passwords (ArgoCD, Grafana, Elastic) |
 | Valkey | ElastiCache Valkey 7.2 (`cache.t4g.micro`, port 6379) | In-memory cache for catalog and inventory services |
-| EKS | EKS 1.35 + managed node group | Kubernetes cluster in private subnets; Spot nodes (`t3`/`t3a.medium`, desired 3) |
+| EKS | EKS 1.35 + managed node group | Kubernetes cluster in private subnets; Spot nodes (`t3`/`t3a.medium`, desired 4, min 2, max 5) |
 | Helm | AWS Load Balancer Controller, ArgoCD, cert-manager, Cluster Autoscaler, External Secrets, Pod Identity (inventory, order) | Installs cluster addons: ALB target group binding, GitOps sync from `devops/shopping-cart-manifest`, node autoscaling, Secrets Manager sync, and SQS IAM roles for service accounts |
 
-- Update RDS, Redis endpoints, SQS URLs, ... in the `.env.example` files under `services/` (`catalog`, `inventory`, `order`, `web-ui`).
-
-<img src="docs/images/image59.png" alt="Env.example files" width="800" />
+- Update RDS, Redis endpoints, SQS URLs, S3 bucket name, ... in each services GitLab project **APP_ENV** variable.
 
 ### 4. Setup GitLab
-- Create an environment `lab` on the protected **main** branch.
+- Create an environment `lab` on the protected **main** branch of each GitLab project.
 
 <img src="docs/images/image57.png" alt="GitLab environment" width="800" />
 
@@ -244,13 +248,13 @@ terraform apply
 | ARGOCD_URL | Services | Hostname of ArgoCD |
 | AWS_ECR | Services | ECR repository ARN |
 | AWS_ROLE | Services, DevOps | GitLab OIDC provider IAM role |
-| HELM_REPO_URL | Services | HTTPS URL of this GitLab project (manifests live in `devops/shopping-cart-manifest`) |
-| HELM_REPO_TOKEN | Services | Access token for this GitLab project |
+| HELM_REPO_URL | Services | HTTPS URL of the `shopping-cart-manifest` GitLab project |
+| HELM_REPO_TOKEN | Services | Access token for the `shopping-cart-manifest` GitLab project |
 | AWS_REGION | Services, DevOps | AWS region for the project |
 | AWS_S3 | Services (web-ui) | Origin S3 bucket ARN |
 | AWS_DISTRIBUTION_ID | Services (web-ui) | CloudFront distribution ID |
 
-- In GitLab, create a fine-grained token for this project with read and write access for commits (used to update Helm values in `devops/shopping-cart-manifest`).
+- In GitLab, create a token scoped to the `shopping-cart-manifest` project with read and write access for commits.
 
 <img src="docs/images/image17.png" alt="GitLab fine-grained access token" width="800" />
 
@@ -260,7 +264,7 @@ terraform apply
 
 ### 5. Configure GitLab runner for CI/CD
 
-- Authenticate the GitLab OIDC provider with AWS. Use the `lab-shopping-cart-gitlab-runner-provider` ARN to create temporary AWS credentials for the GitLab runner Docker executor. Copy the IAM role ARN into the `AWS_ROLE` variable in this GitLab project.
+- Authenticate the GitLab OIDC provider with AWS. Use the `lab-shopping-cart-gitlab-runner-provider` ARN to create temporary AWS credentials for the GitLab runner Docker executor. Copy the IAM role ARN into the `AWS_ROLE` variable in each GitLab project that needs AWS.
 
 <img src="docs/images/image19.png" alt="GitLab OIDC IAM role" width="800" />
 
@@ -272,7 +276,7 @@ terraform apply
 
 ``` bash
 sudo gitlab-runner register  --url https://gitlab.com  --token <gitlab-runner-registration-token>
-# Defaul: https://gitlab.com -> Press Enter
+# Default: https://gitlab.com -> Press Enter
 shopping-cart
 docker
 alpine:latest
@@ -289,8 +293,8 @@ sudo systemctl enable gitlab-runner
 
 <img src="docs/images/image23.png" alt="Infrastructure pipeline overview" width="800" />
 
-- Push Terraform changes under `devops/shopping-cart-infra`.
-- Verify the `terraform-plan` job, then run the `terraform-apply` job manually.
+- Push Terraform changes to the `shopping-cart-infra` GitLab project (source: `devops/shopping-cart-infra`).
+- Verify the `terraform-plan` job, then run the `terraform-deploy` job manually.
 
 <img src="docs/images/image24.png" alt="Terraform plan and apply jobs" width="800" />
 
@@ -302,11 +306,22 @@ sudo systemctl enable gitlab-runner
 
 ### 7. Deploy ArgoCD, EFK, and Kube-Prometheus
 
+Create Route53 records for the public hostnames:
+
+| Hostname | Record | Alias target |
+| -------- | ------ | ------------ |
+| `lab-shopping-cart.jayce-lab.works` | CNAME | CloudFront (web-ui; `/api/*` goes to ALB) |
+| `argocd.lab-shopping-cart.jayce-lab.works` | A (alias) | External ALB |
+| `grafana.lab-shopping-cart.jayce-lab.works` | A (alias) | External ALB |
+| `kibana.lab-shopping-cart.jayce-lab.works` | A (alias) | External ALB |
+
 - Add a CNAME record for web-ui using the CloudFront alias.
 
 <img src="docs/images/image26.png" alt="CloudFront CNAME record" width="800" />
 
 - Add A records for ArgoCD, Kibana, and Grafana using the ALB alias.
+
+<img src="docs/images/image30.png" alt="ArgoCD Route53 record" width="800" />
 
 <img src="docs/images/image27.png" alt="ALB alias A records" width="800" />
 
@@ -316,11 +331,7 @@ sudo systemctl enable gitlab-runner
 
 <img src="docs/images/image29.png" alt="Manifest targetGroupArn values" width="800" />
 
-- Create a Route53 record for the ArgoCD hostname `argocd.shopping-cart.jayce-lab.works` (ALB alias).
-
-<img src="docs/images/image30.png" alt="ArgoCD Route53 record" width="800" />
-
-- Log in to the ArgoCD console at `argocd.shopping-cart.jayce-lab.works` with user `admin` and the password from the `helm-addon-credentials` secret.
+- Log in to the ArgoCD console at `argocd.lab-shopping-cart.jayce-lab.works` with user `admin` and the password from the `helm-addon-credentials` secret.
 
 <img src="docs/images/image31.png" alt="ArgoCD login" width="800" />
 
@@ -330,7 +341,7 @@ sudo systemctl enable gitlab-runner
 
 ### 8. Deploy the web application
 
-- Commit and push service changes under `services/`:
+- Commit and push each service GitLab project (source folders under `services/`):
 
 <img src="docs/images/image34.png" alt="Service repository changes" width="800" />
 
@@ -390,7 +401,7 @@ sudo systemctl enable gitlab-runner
 
 <img src="docs/images/image51.png" alt="Update Slack webhook secret" width="800" />
 
-- Commit and push the changes under `devops/shopping-cart-manifest`. Result:
+- Commit and push the `shopping-cart-manifest` GitLab project (source: `devops/shopping-cart-manifest`). Result:
 
 <img src="docs/images/image52.png" alt="Slack alert result" width="800" />
 
