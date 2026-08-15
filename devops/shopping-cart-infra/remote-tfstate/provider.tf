@@ -1,6 +1,6 @@
 ############################# REMOTE STATE PROVIDER ############################
 
 provider "aws" {
-  region              = local.project.region
-  allowed_account_ids = [local.project.account_id]
+  region              = var.project.region
+  allowed_account_ids = [var.project.account_id]
 }
