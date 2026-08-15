@@ -197,6 +197,8 @@ terraform apply
 
 | Service | Component | Description |
 | ------- | --------- | ----------- |
+| Hosted Zone | Route53 public hosted zone | Creates the hosted zone for `jayce-lab.works`; NS records are copied to the registrar in step 2 |
+| ACM | ALB and CloudFront certificates | Issues `*.lab-shopping-cart.jayce-lab.works` (ALB, regional) and `lab-shopping-cart.jayce-lab.works` (CloudFront, `us-east-1`); Terraform creates DNS validation records and waits until both certs are issued |
 | VPC | VPC, subnets, IGW, NAT Gateway, route tables | Creates the network in `ap-southeast-1` with 2 AZs, 2 public and 2 private subnets, Internet Gateway, and NAT Gateway |
 | KMS | Customer managed keys (CMK) | Encrypts ECR, SQS, RDS, ElastiCache, Secrets Manager, and EKS |
 | ECR | Private repositories | Image registries for `catalog`, `inventory`, and `order` (keep last 3 images) |
