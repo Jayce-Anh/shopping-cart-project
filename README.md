@@ -254,13 +254,19 @@ terraform apply
 | AWS_S3 | Services (web-ui) | Origin S3 bucket ARN |
 | AWS_DISTRIBUTION_ID | Services (web-ui) | CloudFront distribution ID |
 
-- In GitLab, create a token scoped to the `shopping-cart-manifest` project with read and write access for commits.
+- In GitLab, create a **Fine-grained token** with scoped to the `shopping-cart-manifest` project with read and write access for commits.
 
-<img src="docs/images/image17.png" alt="GitLab fine-grained access token" width="800" />
+<img src="docs/images/image16.png" alt="GitLab fine-grained access token" width="800" />
+
+<img src="docs/images/image17.png" alt="GitLab fine-grained access token settings" width="800" />
 
 - Paste the token into the `HELM_REPO_TOKEN` variable, then update it in the `lab-shopping-cart-helm-git-token` secret.
 
 <img src="docs/images/image18.png" alt="Helm Git token secret" width="800" />
+
+- The first Terraform apply creates this secret with a placeholder (`replace-me-with-gitlab-token`). ArgoCD Helm can install, but it cannot clone the manifest repo until the real token is in Secrets Manager **and** Terraform has refreshed `argocd-repo-creds` in the cluster.
+
+- After you put the real GitLab token in `lab-shopping-cart-helm-git-token` secret, apply again: Run `terraform apply`, or use **GitLab CI** (if the infra pipeline is setting up successfully at step 6) to commit and push `shopping-cart-infra` to automatically apply the changes.
 
 ### 5. Configure GitLab runner for CI/CD
 
@@ -397,9 +403,11 @@ Create Route53 records for the public hostnames (example):
 
 <img src="docs/images/image50.png" alt="Slack webhook URL" width="800" />
 
-- Update the `lab-shopping-cart-helm-addon-credentials` secret with the Slack webhook URL.
+- Update the `lab-shopping-cart-helm-addon-credentials` secret with the Slack webhook URL (`slack_webhook_url`). The first apply stores a placeholder (`replace-me-with-slack-webhook-url`).
 
 <img src="docs/images/image51.png" alt="Update Slack webhook secret" width="800" />
+
+- External Secrets reads this value from AWS. After you put the real webhook URL in Secrets Manager, run `terraform apply`, or use **GitLab CI** (if the infra pipeline is complete at step 6) to commit and push `shopping-cart-infra` to automatically apply the changes.
 
 - Commit and push the `shopping-cart-manifest` GitLab project (source: `devops/shopping-cart-manifest`). Result:
 
