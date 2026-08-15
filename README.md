@@ -243,7 +243,7 @@ terraform apply
 
 | Variable | Groups / services used | Description |
 | -------- | ---------------------- | ----------- |
-| APP_ENV | Services | Copy values from `.env.example` in each service directory |
+| APP_ENV | Services | This is the environment variable that is used to identify the environment of the application. Example: **.env.example** file in each service directory. |
 | ARGOCD_PASSWORD | Services | Password stored in the `lab-shopping-cart-helm-addon-credentials` secret |
 | ARGOCD_URL | Services | Hostname of ArgoCD |
 | AWS_ECR | Services | ECR repository ARN |
