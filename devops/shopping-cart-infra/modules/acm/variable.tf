@@ -16,3 +16,9 @@ variable "tags" {
   type        = map(string)
   description = "Tags to apply to the ACM certificates"
 }
+
+#================ Hosted Zone =================#
+variable "acm_hosted_zone_id" {
+  type        = string
+  description = "Hosted zone ID for the ACM certificate"
+}

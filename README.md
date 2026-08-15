@@ -48,7 +48,7 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
   - [Local setup](#local-setup)
 - [IV. Deploy Infrastructure](#iv-deploy-infrastructure)
   - [1. Setup S3 backend remote state](#1-setup-s3-backend-remote-state)
-  - [2. Deploy and configure Route53 Hosted Zone and ACM](#2-deploy-and-configure-route53-hosted-zone-and-acm)
+  - [2. Deploy and configure Route53 Hosted Zone](#2-deploy-and-configure-route53-hosted-zone)
   - [3. Deploy the rest of the services](#3-deploy-the-rest-of-the-services)
   - [4. Setup GitLab](#4-setup-gitlab)
   - [5. Configure GitLab runner for CI/CD](#5-configure-gitlab-runner-for-cicd)
@@ -170,39 +170,25 @@ Set up an S3 backend for Terraform state to avoid deployment conflicts and impro
 
 <img src="docs/images/image10.png" alt="S3 Terraform state bucket" width="800" />
 
-### 2. Deploy and configure Route53 Hosted Zone and ACM
+### 2. Deploy and configure Route53 Hosted Zone
 
-- From `devops/shopping-cart-infra`, deploy Route53 and the ALB ACM certificate first:
+- From `devops/shopping-cart-infra`, deploy the Route53 hosted zone first:
 
 ```bash
 cd devops/shopping-cart-infra
 terraform apply --target=module.hosted_zone
-terraform apply --target=module.acm
 ```
 
 - **Route53:** Manage the root domain `jayce-lab.works`.
-- **ACM (ALB):** `*.lab-shopping-cart.jayce-lab.works` from `module.acm`.
-
-<img src="docs/images/image11.png" alt="ACM certificates" width="600" />
-
-1. Transfer the domain to Route53.
-
-- Transfer the domain to Route53 for easier management. Copy the Route53 hosted zone NS records to your custom DNS nameservers.
+- Copy the Route53 hosted zone NS records to your registrar nameservers. Wait until NS propagation completes (about 10–30 minutes) before the next apply.
 
 <img src="docs/images/image12.png" alt="Route53 NS records" width="800" />
 
 <img src="docs/images/image13.png" alt="Custom DNS nameservers" width="800" />
 
-- In the ALB certificate, choose **Create record in Route53**.
-
-- Wait until the domain transfer completes and the ALB certificate validates successfully (about 10–30 minutes).
-
-<img src="docs/images/image14.png" alt="Validated ACM certificates" width="800" />
-
-
 ### 3. Deploy the rest of the services
 
-Deploy the remaining modules from `devops/shopping-cart-infra/main.tf` (after Route53 and ACM):
+Deploy the remaining modules from `devops/shopping-cart-infra/main.tf` (after Route53 NS is pointed).
 
 ```bash
 cd devops/shopping-cart-infra

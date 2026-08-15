@@ -101,7 +101,7 @@ resource "aws_cloudfront_distribution" "cf_distribution" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = aws_acm_certificate.cloudfront.arn
+    acm_certificate_arn = aws_acm_certificate_validation.cloudfront.certificate_arn
     ssl_support_method  = "sni-only"
   }
 

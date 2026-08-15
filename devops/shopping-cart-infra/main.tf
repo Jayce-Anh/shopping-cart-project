@@ -10,9 +10,10 @@ module "hosted_zone" {
 
 #================= ACM Certificate =================#
 module "acm" {
-  source  = "./modules/acm"
-  project = var.project
-  tags    = var.tags
+  source             = "./modules/acm"
+  project            = var.project
+  tags               = var.tags
+  acm_hosted_zone_id = module.hosted_zone.hosted_zone_id
 }
 
 #================= Secret Manager =================#
@@ -62,10 +63,11 @@ module "alb" {
 
 #================= CloudFront =================#
 module "cloudfront" {
-  source          = "./modules/cloudfront"
-  project         = var.project
-  tags            = var.tags
-  cf_alb_dns_name = module.alb.lb_dns_name
+  source            = "./modules/cloudfront"
+  project           = var.project
+  tags              = var.tags
+  cf_alb_dns_name   = module.alb.lb_dns_name
+  cf_hosted_zone_id = module.hosted_zone.hosted_zone_id
 }
 
 #================= KMS =================#

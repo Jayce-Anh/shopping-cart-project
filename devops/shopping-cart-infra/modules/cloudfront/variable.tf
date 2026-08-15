@@ -3,11 +3,12 @@
 #================ Project =================#
 variable "project" {
   type = object({
-    name = string
-    env  = string
+    name   = string
+    env    = string
+    region = string
     domain = string
   })
-  description = "Project metadata (env, name, region, account_ids)"
+  description = "Project configuration"
 }
 
 variable "tags" {
@@ -19,4 +20,9 @@ variable "tags" {
 variable "cf_alb_dns_name" {
   type        = string
   description = "DNS name of the ALB used as /api/* origin"
+}
+
+variable "cf_hosted_zone_id" {
+  type        = string
+  description = "Hosted zone ID for the CloudFront certificate"
 }
