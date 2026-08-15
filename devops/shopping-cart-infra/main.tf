@@ -52,7 +52,7 @@ module "gitlab_runner" {
 
 #================= External ALB =================#
 module "alb" {
-  source         = "./modules/alb/external"
+  source         = "./modules/alb"
   project        = var.project
   tags           = var.tags
   alb_vpc_id     = module.vpc.vpc_id
@@ -62,7 +62,7 @@ module "alb" {
 
 #================= CloudFront =================#
 module "cloudfront" {
-  source          = "./modules/cloudfront/path-base-routing"
+  source          = "./modules/cloudfront"
   project         = var.project
   tags            = var.tags
   cf_alb_dns_name = module.alb.lb_dns_name
@@ -135,6 +135,7 @@ module "helm" {
   helm_argocd_tg_arn      = module.alb.tg_arns["argocd"]
   helm_sqs_queue_arn      = module.sqs.sqs_queue_arn
   helm_rds_secret_arn     = module.rds.rds_secret_arn
+  helm_eks_node_group_id  = module.eks.node_group_id
 }
 
 #================= SQS =================#

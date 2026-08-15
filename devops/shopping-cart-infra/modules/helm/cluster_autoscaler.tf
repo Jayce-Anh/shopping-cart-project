@@ -37,6 +37,7 @@ resource "helm_release" "cluster_autoscaler" {
   timeout = 300
 
   depends_on = [
+    terraform_data.eks_nodes,
     aws_iam_role.cluster_autoscaler,
     aws_eks_pod_identity_association.cluster_autoscaler,
   ]

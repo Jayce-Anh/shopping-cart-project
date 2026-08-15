@@ -20,6 +20,7 @@ resource "helm_release" "external_secrets" {
   ]
 
   depends_on = [
+    terraform_data.eks_nodes,
     helm_release.load_balancer_controller,
     aws_eks_pod_identity_association.external_secrets,
   ]

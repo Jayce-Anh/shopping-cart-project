@@ -16,9 +16,16 @@ variable "tags" {
   description = "Common tags applied to all resources"
 }
 
+#=============== Helm =================#
+
 variable "helm_eks_cluster" {
   type        = string
   description = "EKS cluster name"
+}
+
+variable "helm_eks_node_group_id" {
+  type        = string
+  description = "EKS node group ID. Implicit destroy-order lock so nodes stay until Helm/K8s resources are gone."
 }
 
 variable "helm_vpc_id" {

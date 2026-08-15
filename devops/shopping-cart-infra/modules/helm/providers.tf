@@ -1,5 +1,9 @@
 ############################# HELM PROVIDERS #############################
 
+resource "terraform_data" "eks_nodes" {
+  input = var.helm_eks_node_group_id
+}
+
 data "aws_eks_cluster" "main" {
   name = var.helm_eks_cluster
 }

@@ -73,6 +73,7 @@ resource "helm_release" "argocd" {
   ]
 
   depends_on = [
+    terraform_data.eks_nodes,
     helm_release.load_balancer_controller,
     helm_release.cert_manager,
     kubernetes_manifest.cert_manager_cluster_issuer,
@@ -121,6 +122,10 @@ resource "kubernetes_manifest" "argocd_tgb" {
     }
   }
 
+  timeouts {
+    delete = "5m"
+  }
+
   depends_on = [
     helm_release.argocd,
     helm_release.load_balancer_controller,
@@ -134,8 +139,6 @@ kind: Application
 metadata:
   name: argocd
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:

@@ -58,6 +58,10 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
   - [9. Setup monitoring (Kube-Prometheus)](#9-setup-monitoring-kube-prometheus)
   - [10. Setup alerts (Slack)](#10-setup-alerts-slack)
   - [11. Setup logging (EFK)](#11-setup-logging-efk)
+- [V. Clean up the lab](#v-clean-up-the-lab)
+  - [1. Before you destroy](#1-before-you-destroy)
+  - [2. Destroy the lab](#2-destroy-the-lab)
+  - [3. Destroy the S3 state bucket (optional)](#3-destroy-the-s3-state-bucket-optional)
 
 ## II. Overview
 
@@ -416,5 +420,45 @@ Create Route53 records for the public hostnames (example):
 - Create visualization panels and add them to a dashboard.
 
 <img src="docs/images/image56.png" alt="Kibana dashboard" width="800" />
+
+## V. Clean up the lab
+
+Destroy from `devops/shopping-cart-infra`. Helm and Kubernetes objects must be deleted **while EKS nodes are still running**. If nodes die first, TargetGroupBinding and Helm CRDs keep finalizers and Terraform times out.
+
+### 1. Before you destroy
+
+- Login to AWS and set the profile:
+
+```bash
+aws sso login --profile=jayce-lab
+export AWS_PROFILE=jayce-lab
+```
+
+- Update kubeconfig so Helm/Kubernetes providers can talk to the cluster:
+
+```bash
+aws eks update-kubeconfig --name lab-shopping-cart --region ap-southeast-1
+```
+
+### 2. Destroy the lab
+
+```bash
+cd devops/shopping-cart-infra
+terraform init
+terraform destroy
+```
+
+Review the plan. It should show Helm/Kubernetes resources going first, then the EKS node group. Type `yes` to confirm.
+
+### 3. Destroy the S3 state bucket (optional)
+
+The remote state bucket in `devops/shopping-cart-infra/remote-tfstate` also has `prevent_destroy`. Keep it unless you want to remove all Terraform state.
+
+To delete it, set `prevent_destroy = false` in `modules/s3/remote-state.tf`, then:
+
+```bash
+cd devops/shopping-cart-infra/remote-tfstate
+terraform destroy
+```
 
 ## Thanks for reading!

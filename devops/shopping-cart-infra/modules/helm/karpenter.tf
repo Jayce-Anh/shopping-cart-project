@@ -101,6 +101,7 @@ resource "helm_release" "karpenter" {
   timeout = 300
 
   depends_on = [
+    terraform_data.eks_nodes,
     aws_iam_role.karpenter,
     aws_eks_pod_identity_association.karpenter,
     aws_sqs_queue_policy.karpenter,

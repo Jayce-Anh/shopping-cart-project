@@ -17,7 +17,10 @@ resource "helm_release" "cert_manager" {
   timeout = 300
   wait    = true
 
-  depends_on = [helm_release.load_balancer_controller]
+  depends_on = [
+    terraform_data.eks_nodes,
+    helm_release.load_balancer_controller,
+  ]
 }
 
 resource "kubernetes_manifest" "cert_manager_cluster_issuer" {

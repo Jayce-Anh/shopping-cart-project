@@ -30,6 +30,7 @@ resource "helm_release" "load_balancer_controller" {
   wait    = true
 
   depends_on = [
+    terraform_data.eks_nodes,
     aws_iam_role_policy_attachment.alb_controller,
     aws_eks_pod_identity_association.alb_controller,
   ]
