@@ -36,7 +36,7 @@ resource "aws_iam_instance_profile" "runner" {
 #================= Gitlab CI Provider ==================#
 # Roles 
 resource "aws_iam_role" "ci_provider" {
-  name = "${var.project.env}-${var.project.name}-gitlab-ci-provider"
+  name = "${var.project.env}-${var.project.name}-gitlab-runner-provider"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -67,7 +67,7 @@ resource "aws_iam_role" "ci_provider" {
   })
 
   tags = merge(var.tags, {
-    Name = "${var.project.env}-${var.project.name}-gitlab-ci-provider"
+    Name = "${var.project.env}-${var.project.name}-gitlab-runner-provider"
   })
 }
 
