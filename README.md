@@ -155,7 +155,7 @@ aws sts get-caller-identity
 
 ### Domain
 
-- Buy a domain from a registrar such as Cloudflare, GoDaddy, or Namecheap.
+- Buy a domain from a registrar such as Cloudflare, GoDaddy, or Namecheap. Mine is: `jayce-lab.works`.
 
 <img src="docs/images/image2.png" alt="Domain registration" width="800" />
 
