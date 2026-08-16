@@ -134,6 +134,25 @@ shopping-cart-project/
 
 <img src="docs/images/image1.png" alt="AWS account console" width="800" />
 
+- Create AWS profile sso in `~/.aws/config` file with the following content:
+```
+[profile sso]
+sso_session = sso
+sso_account_id = <your-aws-account-id>
+sso_role_name = <your-aws-role-name>
+```
+
+```bash
+aws sso login --profile <your-aws-profile>
+export AWS_PROFILE=<your-aws-profile>
+aws sts get-caller-identity
+
+```
+<img src="docs/images/image61.png" alt="AWS profile sso" width="800" />
+
+- Optional: If you want Gitlab and Bastion instances SSH access instead of using Session Manager. Create a Key-Pair in AWS EC2 console and download the private key file. Use this key-pair to SSH connect to the Gitlab and Bastion instances.
+<img src="docs/images/image60.png" alt="AWS EC2 Key-Pair" width="800" />
+
 ### Domain
 
 - Buy a domain from a registrar such as Cloudflare, GoDaddy, or Namecheap.
