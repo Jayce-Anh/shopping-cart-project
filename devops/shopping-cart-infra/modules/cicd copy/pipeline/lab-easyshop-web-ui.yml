@@ -1,0 +1,35 @@
+version: 0.2
+env:
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - echo "Installing dependencies..."
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - apt-get update && apt-get install -y jq
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-8)
+      - echo "Deploying commit -> $COMMIT_HASH"
+      - echo "S3 Bucket Name -> $S3_BUCKET_NAME"
+      - echo "Distribution ID -> $DISTRIBUTION_ID"
+      - aws secretsmanager get-secret-value --secret-id $SECRET_MANAGER --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' > .env
+      - set -a && . ./.env && set +a
+  build:
+    on-failure: ABORT
+    commands:
+      - npm ci
+      - npm run build
+  post_build:
+    on-failure: ABORT
+    commands:
+      - echo "Syncing static files to S3"
+      - aws s3 sync ./out s3://$S3_BUCKET_NAME --delete --exact-timestamps
+      - echo "Invalidating CloudFront cache"
+      - aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+cache:
+  paths:
+    - node_modules/**/*

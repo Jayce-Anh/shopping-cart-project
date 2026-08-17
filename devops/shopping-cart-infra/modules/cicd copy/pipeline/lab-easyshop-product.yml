@@ -1,0 +1,30 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - apt-get update && apt-get install -y jq
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-8)
+      - export ECR_HOST=$(echo "$ECR_URL" | cut -d/ -f1)
+      - echo "Commit $COMMIT_HASH service $SERVICE"
+      - echo "ECR $ECR_HOST"
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_HOST
+      - aws secretsmanager get-secret-value --secret-id $SECRET_MANAGER --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' > .env
+  build:
+    on-failure: ABORT
+    commands:
+      - echo "Build $SERVICE started on $(date)"
+      - docker build -t $ECR_URL:$COMMIT_HASH .
+      - docker push $ECR_URL:$COMMIT_HASH
+  post_build:
+    commands:
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$ECR_URL:$COMMIT_HASH" > artifact.json
+      - cat artifact.json
+artifacts:
+  files:
+    - artifact.json
+  name: artifacts
