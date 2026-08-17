@@ -150,8 +150,9 @@ aws sts get-caller-identity
 ```
 <img src="docs/images/image61.png" alt="AWS profile sso" width="800" />
 
-- Optional: If you want Gitlab and Bastion instances SSH access instead of using Session Manager. Create a Key-Pair in AWS EC2 console and download the private key file. Use this key-pair to SSH connect to the Gitlab and Bastion instances.
+- Optional: If you want to connect to Gitlab and Bastion instances using SSH instead of using Session Manager. Create a Key-Pair in AWS EC2 console and download the private key file. Define your Key-pair in EC2 module.
 <img src="docs/images/image60.png" alt="AWS EC2 Key-Pair" width="800" />
+<img src="docs/images/image62.png" alt="AWS EC2 Key-Pair" width="800" />
 
 ### Domain
 
