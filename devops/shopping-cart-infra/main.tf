@@ -132,6 +132,7 @@ module "helm" {
   project                 = var.project
   tags                    = var.tags
   helm_eks_cluster        = module.eks.eks_cluster_name
+  helm_eks_node_group_id  = module.eks.node_group_id
   helm_vpc_id             = module.vpc.vpc_id
   helm_kms_key            = module.kms.key_arn
   helm_repo_url           = var.helm_repo
@@ -140,7 +141,6 @@ module "helm" {
   helm_rds_secret         = module.secret_manager.secret_arn["rds-credentials"]
   helm_addon_secret       = module.secret_manager.secret_arn["helm-addon-credentials"]
   helm_git_token_secret   = module.secret_manager.secret_arn["helm-git-token"]
-  helm_eks_node_group_id  = module.eks.node_group_id
 }
 
 #================= SQS =================#
