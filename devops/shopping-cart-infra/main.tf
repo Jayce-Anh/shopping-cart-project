@@ -62,7 +62,7 @@ module "alb" {
   alb_vpc_id      = module.vpc.vpc_id
   alb_subnet_ids  = module.vpc.public_subnet_ids
   alb_dns_cert    = module.acm.cert_arns
-  allowed_cidrs   = module.gitlab_runner.public_cidrs
+  allowed_cidrs   = concat(var.allowed_cidrs, [module.gitlab_runner.public_cidr])
 }
 
 #================= CloudFront =================#
