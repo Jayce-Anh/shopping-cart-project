@@ -47,17 +47,18 @@ The goal is a complete path from Terraform infrastructure → CI pipeline → Gi
   - [GitLab account](#gitlab-account)
   - [Local setup](#local-setup)
 - [IV. Deploy Infrastructure](#iv-deploy-infrastructure)
-  - [1. Setup S3 backend remote state](#1-setup-s3-backend-remote-state)
-  - [2. Deploy and configure Route53 Hosted Zone](#2-deploy-and-configure-route53-hosted-zone)
-  - [3. Deploy the rest of the services](#3-deploy-the-rest-of-the-services)
-  - [4. Setup GitLab](#4-setup-gitlab)
-  - [5. Configure GitLab runner for CI/CD](#5-configure-gitlab-runner-for-cicd)
-  - [6. Deploy infrastructure with GitLab CI](#6-deploy-infrastructure-with-gitlab-ci)
-  - [7. Deploy ArgoCD, EFK, and Kube-Prometheus](#7-deploy-argocd-efk-and-kube-prometheus)
-  - [8. Deploy the web application](#8-deploy-the-web-application)
-  - [9. Setup monitoring (Kube-Prometheus)](#9-setup-monitoring-kube-prometheus)
-  - [10. Setup alerts (Slack)](#10-setup-alerts-slack)
-  - [11. Setup logging (EFK)](#11-setup-logging-efk)
+  - [1. Configure Terraform variables](#1-configure-terraform-variables)
+  - [2. Setup S3 backend remote state](#2-setup-s3-backend-remote-state)
+  - [3. Deploy and configure Route53 Hosted Zone](#3-deploy-and-configure-route53-hosted-zone)
+  - [4. Deploy the rest of the services](#4-deploy-the-rest-of-the-services)
+  - [5. Setup GitLab](#5-setup-gitlab)
+  - [6. Configure GitLab runner for CI/CD](#6-configure-gitlab-runner-for-cicd)
+  - [7. Deploy infrastructure with GitLab CI](#7-deploy-infrastructure-with-gitlab-ci)
+  - [8. Deploy ArgoCD, EFK, and Kube-Prometheus](#8-deploy-argocd-efk-and-kube-prometheus)
+  - [9. Deploy the web application](#9-deploy-the-web-application)
+  - [10. Setup monitoring (Kube-Prometheus)](#10-setup-monitoring-kube-prometheus)
+  - [11. Setup alerts (Slack)](#11-setup-alerts-slack)
+  - [12. Setup logging (EFK)](#12-setup-logging-efk)
 - [V. Clean up the lab](#v-clean-up-the-lab)
   - [1. Destroy the lab](#1-destroy-the-lab)
   - [2. Destroy the S3 state bucket (optional)](#2-destroy-the-s3-state-bucket-optional)
@@ -150,7 +151,8 @@ aws sts get-caller-identity
 ```
 <img src="docs/images/image61.png" alt="AWS profile sso" width="800" />
 
-- Optional: If you want to connect to Gitlab and Bastion instances using SSH instead of using Session Manager. Create a Key-Pair in AWS EC2 console and download the private key file. Define your Key-pair in EC2 module.
+- Optional: If you want to connect to GitLab runner and Bastion instances using SSH instead of Session Manager, create a Key-Pair in the AWS EC2 console, download the private key, and define it in the EC2 module.
+
 <img src="docs/images/image60.png" alt="AWS EC2 Key-Pair" width="800" />
 <img src="docs/images/image62.png" alt="AWS EC2 Key-Pair" width="800" />
 
@@ -181,7 +183,14 @@ aws sts get-caller-identity
 
 ## IV. Deploy Infrastructure
 
-### 1. Setup S3 backend remote state
+### 1. Configure Terraform variables
+
+- Configure the remote state Terraform variables in `devops/shopping-cart-infra/remote-tfstate/terraform.tfvars`. Replace the values with your own.
+- Do the same for the root module Terraform variables in `devops/shopping-cart-infra/terraform.tfvars`.
+
+<img src="docs/images/image63.png" alt="Terraform variables" width="800" />
+
+### 2. Setup S3 backend remote state
 
 Set up an S3 backend for Terraform state to avoid deployment conflicts and improve state management. Run this from `devops/shopping-cart-infra/remote-tfstate`.
 
@@ -189,7 +198,7 @@ Set up an S3 backend for Terraform state to avoid deployment conflicts and impro
 
 <img src="docs/images/image10.png" alt="S3 Terraform state bucket" width="800" />
 
-### 2. Deploy and configure Route53 Hosted Zone
+### 3. Deploy and configure Route53 Hosted Zone
 
 - From `devops/shopping-cart-infra`, deploy the Route53 hosted zone first:
 
@@ -205,7 +214,7 @@ terraform apply --target=module.hosted_zone
 
 <img src="docs/images/image13.png" alt="Custom DNS nameservers" width="800" />
 
-### 3. Deploy the rest of the services
+### 4. Deploy the rest of the services
 
 Deploy the remaining modules from `devops/shopping-cart-infra/main.tf` (after Route53 NS is pointed).
 
@@ -216,13 +225,13 @@ terraform apply
 
 | Service | Component | Description |
 | ------- | --------- | ----------- |
-| Hosted Zone | Route53 public hosted zone | Creates the hosted zone for `jayce-lab.works`; NS records are copied to the registrar in step 2 |
+| Hosted Zone | Route53 public hosted zone | Creates the hosted zone for `jayce-lab.works` |
 | ACM | ALB and CloudFront certificates | Issues `*.lab-shopping-cart.jayce-lab.works` (ALB, regional) and `lab-shopping-cart.jayce-lab.works` (CloudFront, `us-east-1`); Terraform creates DNS validation records and waits until both certs are issued |
 | VPC | VPC, subnets, IGW, NAT Gateway, route tables | Creates the network in `ap-southeast-1` with 2 AZs, 2 public and 2 private subnets, Internet Gateway, and NAT Gateway |
 | KMS | Customer managed keys (CMK) | Encrypts ECR, SQS, RDS, ElastiCache, Secrets Manager, and EKS |
 | ECR | Private repositories | Image registries for `catalog`, `inventory`, and `order` (keep last 3 images) |
-| Bastion | EC2 Spot (`t3.small`) | Jump host in a public subnet for SSH access to private resources (RDS, EKS API) |
-| GitLab Runner | EC2 + user data | EC2 instance that registers and runs GitLab CI jobs |
+| Bastion | EC2 Spot (`t3.small`) | Jump host in a public subnet for SSH access to private resources (RDS, EKS API). |
+| GitLab Runner | EC2 + user data | EC2 instance that registers and runs GitLab CI jobs. |
 | Runner IAM | GitLab OIDC IAM role | Lets GitLab CI assume an AWS role (`AWS_ROLE`) without long-lived keys |
 | ALB | External Application Load Balancer | HTTPS load balancer with target groups for catalog, inventory, order, ArgoCD, Grafana, and Kibana |
 | CloudFront | CloudFront + S3 origin | Hosts web-ui on S3; alias `lab-shopping-cart.jayce-lab.works`; routes `/api/*` to ALB |
@@ -235,7 +244,7 @@ terraform apply
 
 - Update RDS, Redis endpoints, SQS URLs, S3 bucket name, ... in each services GitLab project **APP_ENV** variable.
 
-### 4. Setup GitLab
+### 5. Setup GitLab
 - Create an environment `lab` on the protected **main** branch of each GitLab project.
 
 <img src="docs/images/image57.png" alt="GitLab environment" width="800" />
@@ -273,9 +282,9 @@ terraform apply
 
 - The first Terraform apply creates this secret with a placeholder (`replace-me-with-gitlab-token`). ArgoCD Helm can install, but it cannot clone the manifest repo until the real token is in Secrets Manager **and** Terraform has refreshed `argocd-repo-creds` in the cluster.
 
-- After you put the real GitLab token in `lab-shopping-cart-helm-git-token` secret, apply again: Run `terraform apply`, or use **GitLab CI** (if the infra pipeline is setting up successfully at step 6) to commit and push `shopping-cart-infra` to automatically apply the changes.
+- After you put the real GitLab token in `lab-shopping-cart-helm-git-token` secret, apply again: Run `terraform apply`, or use **GitLab CI** (if the infra pipeline is setting up successfully at step 7) to commit and push `shopping-cart-infra` to automatically apply the changes.
 
-### 5. Configure GitLab runner for CI/CD
+### 6. Configure GitLab runner for CI/CD
 
 - Authenticate the GitLab OIDC provider with AWS. Use the `lab-shopping-cart-gitlab-runner-provider` ARN to create temporary AWS credentials for the GitLab runner Docker executor. Copy the IAM role ARN into the `AWS_ROLE` variable in each GitLab project that needs AWS.
 
@@ -302,7 +311,7 @@ sudo systemctl enable gitlab-runner
 
 <img src="docs/images/image22.png" alt="Runner token secret" width="800" />
 
-### 6. Deploy infrastructure with GitLab CI
+### 7. Deploy infrastructure with GitLab CI
 
 <img src="docs/images/image23.png" alt="Infrastructure pipeline overview" width="800" />
 
@@ -317,7 +326,7 @@ sudo systemctl enable gitlab-runner
 
 <img src="docs/images/image4.png" alt="Infrastructure environment deployments" width="800" />
 
-### 7. Deploy ArgoCD, EFK, and Kube-Prometheus
+### 8. Deploy ArgoCD, EFK, and Kube-Prometheus
 
 Create Route53 records for the public hostnames (example):
 
@@ -352,7 +361,7 @@ Create Route53 records for the public hostnames (example):
 
 <img src="docs/images/image33.png" alt="ArgoCD application sync" width="800" />
 
-### 8. Deploy the web application
+### 9. Deploy the web application
 
 - Commit and push each service GitLab project (source folders under `services/`):
 
@@ -380,7 +389,7 @@ Create Route53 records for the public hostnames (example):
 
 <img src="docs/images/image42.png" alt="Web UI product page" width="800" />
 
-### 9. Setup monitoring (Kube-Prometheus)
+### 10. Setup monitoring (Kube-Prometheus)
 
 - Log in with the admin user and password from `lab-shopping-cart-helm-addon-credentials`.
 
@@ -388,7 +397,7 @@ Create Route53 records for the public hostnames (example):
 
 <img src="docs/images/image44.png" alt="Grafana dashboard" width="800" />
 
-### 10. Setup alerts (Slack)
+### 11. Setup alerts (Slack)
 
 - Create a channel named `lab-shopping-cart-alert` in your Slack workspace.
 
@@ -414,13 +423,13 @@ Create Route53 records for the public hostnames (example):
 
 <img src="docs/images/image51.png" alt="Update Slack webhook secret" width="800" />
 
-- External Secrets reads this value from AWS. After you put the real webhook URL in Secrets Manager, run `terraform apply`, or use **GitLab CI** (if the infra pipeline is complete at step 6) to commit and push `shopping-cart-infra` to automatically apply the changes.
+- External Secrets reads this value from AWS. After you put the real webhook URL in Secrets Manager, run `terraform apply`, or use **GitLab CI** (if the infra pipeline is complete at step 7) to commit and push `shopping-cart-infra` to automatically apply the changes.
 
 - Commit and push the `shopping-cart-manifest` GitLab project (source: `devops/shopping-cart-manifest`). Result:
 
 <img src="docs/images/image52.png" alt="Slack alert result" width="800" />
 
-### 11. Setup logging (EFK)
+### 12. Setup logging (EFK)
 
 - Log in with the admin user and password from `lab-shopping-cart-helm-addon-credentials`.
 

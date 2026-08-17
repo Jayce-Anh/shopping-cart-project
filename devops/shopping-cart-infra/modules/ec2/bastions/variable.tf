@@ -31,3 +31,8 @@ variable "bastion_kms_key" {
   nullable    = true
   description = "KMS key ARN/ID for EBS encryption (null = AWS-managed default key) for the bastion"
 }
+
+variable "allowed_cidrs" {
+  type        = list(string)
+  description = "Company/admin IP CIDRs allowed to SSH to the bastion"
+}

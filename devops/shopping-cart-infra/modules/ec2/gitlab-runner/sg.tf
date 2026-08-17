@@ -16,8 +16,8 @@ resource "aws_security_group_rule" "ingress" {
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
-  description       = "Allow SSH for GitLab runner"
-  cidr_blocks       = ["0.0.0.0/0"]
+  description       = "Allow SSH for GitLab runner from admin IP pool"
+  cidr_blocks       = var.allowed_cidrs
 }
 
 resource "aws_security_group_rule" "egress" {

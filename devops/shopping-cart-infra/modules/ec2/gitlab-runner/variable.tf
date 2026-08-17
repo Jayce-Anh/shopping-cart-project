@@ -29,3 +29,8 @@ variable "runner_kms_key" {
   type        = string
   description = "KMS key ARN/ID for EBS encryption (null = AWS-managed default key) for the GitLab runner"
 }
+
+variable "allowed_cidrs" {
+  type        = list(string)
+  description = "Company/admin IP CIDRs allowed to SSH to the GitLab runner"
+}

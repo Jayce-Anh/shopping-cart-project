@@ -16,8 +16,8 @@ resource "aws_security_group_rule" "ssh_ingress" {
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
-  description       = "Allow SSH for bastion"
-  cidr_blocks       = ["0.0.0.0/0"]
+  description       = "Allow SSH for bastion from admin IP pool"
+  cidr_blocks       = var.allowed_cidrs
 }
 
 resource "aws_security_group_rule" "egress" {

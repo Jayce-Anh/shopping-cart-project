@@ -40,6 +40,7 @@ module "bastion" {
   vpc_id          = module.vpc.vpc_id
   subnet_id       = module.vpc.public_subnet_ids[0]
   bastion_kms_key = module.kms.key_arn
+  allowed_cidrs   = var.allowed_cidrs
 }
 
 #================= GitLab Runner ==================#
@@ -50,6 +51,7 @@ module "gitlab_runner" {
   vpc_id         = module.vpc.vpc_id
   subnet_id      = module.vpc.public_subnet_ids[0]
   runner_kms_key = module.kms.key_arn
+  allowed_cidrs  = var.allowed_cidrs
 }
 
 #================= External ALB =================#
@@ -80,10 +82,10 @@ module "kms" {
 
 #================= ECR =================#
 module "ecr" {
-  source       = "./modules/ecr"
-  project      = var.project
-  tags         = var.tags
-  ecr_kms_key  = module.kms.key_arn
+  source      = "./modules/ecr"
+  project     = var.project
+  tags        = var.tags
+  ecr_kms_key = module.kms.key_arn
 }
 
 #================= RDS =================#
@@ -117,6 +119,7 @@ module "eks" {
   eks_subnet_ids = module.vpc.private_subnet_ids
   eks_kms_key    = module.kms.key_arn
   eks_allowed_sg = [module.bastion.sg_id, module.gitlab_runner.sg_id]
+  allowed_cidrs  = var.allowed_cidrs
   eks_alb_sg_id  = module.alb.lb_sg_id
   eks_admin_access = {
     bastion       = module.bastion.role_arn
@@ -128,25 +131,25 @@ module "eks" {
 
 #================= Helm =================#
 module "helm" {
-  source                  = "./modules/helm"
-  project                 = var.project
-  tags                    = var.tags
-  helm_eks_cluster        = module.eks.eks_cluster_name
-  helm_eks_node_group_id  = module.eks.node_group_id
-  helm_vpc_id             = module.vpc.vpc_id
-  helm_kms_key            = module.kms.key_arn
-  helm_repo_url           = var.helm_repo
-  helm_argocd_tg_arn      = module.alb.tg_arns["argocd"]
-  helm_sqs_queue_arn      = module.sqs.sqs_queue_arn
-  helm_rds_secret         = module.secret_manager.secret_arn["rds-credentials"]
-  helm_addon_secret       = module.secret_manager.secret_arn["helm-addon-credentials"]
-  helm_git_token_secret   = module.secret_manager.secret_arn["helm-git-token"]
+  source                 = "./modules/helm"
+  project                = var.project
+  tags                   = var.tags
+  helm_eks_cluster       = module.eks.eks_cluster_name
+  helm_eks_node_group_id = module.eks.node_group_id
+  helm_vpc_id            = module.vpc.vpc_id
+  helm_kms_key           = module.kms.key_arn
+  helm_repo_url          = var.helm_repo
+  helm_argocd_tg_arn     = module.alb.tg_arns["argocd"]
+  helm_sqs_queue_arn     = module.sqs.sqs_queue_arn
+  helm_rds_secret        = module.secret_manager.secret_arn["rds-credentials"]
+  helm_addon_secret      = module.secret_manager.secret_arn["helm-addon-credentials"]
+  helm_git_token_secret  = module.secret_manager.secret_arn["helm-git-token"]
 }
 
 #================= SQS =================#
 module "sqs" {
-  source = "./modules/sqs"
-  project = var.project
-  tags = var.tags
+  source      = "./modules/sqs"
+  project     = var.project
+  tags        = var.tags
   sqs_kms_key = module.kms.key_arn
 }

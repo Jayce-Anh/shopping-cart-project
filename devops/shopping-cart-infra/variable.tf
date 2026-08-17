@@ -22,3 +22,8 @@ variable "helm_repo" {
   type        = string
   description = "Helm repository URL"
 }
+
+variable "allowed_cidrs" {
+  type        = list(string)
+  description = "Company/admin IP CIDRs allowed"
+}

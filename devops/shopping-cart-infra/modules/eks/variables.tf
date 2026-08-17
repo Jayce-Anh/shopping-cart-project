@@ -38,6 +38,11 @@ variable "eks_allowed_sg" {
   description = "Security group IDs allowed to reach the EKS cluster API (e.g. bastion, GitLab runner)"
 }
 
+variable "allowed_cidrs" {
+  type        = list(string)
+  description = "Company/admin IP CIDRs allowed to reach the EKS API"
+}
+
 variable "eks_alb_sg_id" {
   type        = string
   description = "External ALB security group ID allowed to reach service pods on nodes"
