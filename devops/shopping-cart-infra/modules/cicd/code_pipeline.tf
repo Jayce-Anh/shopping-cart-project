@@ -1,42 +1,36 @@
 ################################# CICD - CODE PIPELINE #################################
 
-#================= S3 Bucket =================#
-resource "aws_s3_bucket" "bucket_artifact" {
-  bucket        = "${var.project.env}-${var.project.name}-codepipeline"
-  force_destroy = true
-  tags = merge(var.tags, {
-    Name = "${var.project.env}-${var.project.name}-codepipeline"
-    Env  = "${var.project.env}"
-  })
-}
-
 #================= CodePipeline =================#
 resource "aws_codepipeline" "codepipeline" {
-  name     = "${var.project.env}-${var.project.name}"
+  for_each = aws_codebuild_project.project
+  name     = "${var.project.env}-${var.project.name}-${each.key}"
   role_arn = aws_iam_role.pipeline_role.arn
 
   artifact_store {
-    location = aws_s3_bucket.bucket_artifact.bucket
+    location = "${aws_s3_bucket.bucket_artifact[each.key].bucket}"
     type     = "S3"
   }
 
-  #Source Stage
+  depends_on = [aws_s3_bucket_versioning.bucket_artifact]
+
+  #Source Stage (GitHub v2 via CodeStar Connections)
   stage {
     name = "Source"
 
     action {
       name             = "Source"
       category         = "Source"
-      owner            = "ThirdParty"
-      provider         = "GitHub"
+      owner            = "AWS"
+      provider         = "CodeStarSourceConnection"
       version          = "1"
       output_artifacts = ["Source_Artifacts"]
 
       configuration = {
-        Owner      = var.git_config.org
-        Repo       = var.git_config.repo
-        Branch     = var.git_config.branch
-        OAuthToken = var.git_config.token
+        ConnectionArn        = aws_codestarconnections_connection.github.arn
+        FullRepositoryId     = "${var.cicd_git.org}/${var.cicd_git.repos[each.key]}"
+        BranchName           = "${var.cicd_git.branch}"
+        OutputArtifactFormat = "CODE_ZIP"
+        DetectChanges        = "true"
       }
     }
   }
@@ -55,68 +49,39 @@ resource "aws_codepipeline" "codepipeline" {
       version          = "1"
 
       configuration = {
-        ProjectName = aws_codebuild_project.codebuild.name
+        ProjectName = each.value.name
       }
     }
   }
 
-  #Conditional Deploy Stage (only for ECS deployments)
-  stage {
-    name = "Deploy"
-    
-    action {
-      name            = "Deploy"
-      category        = "Deploy"
-      owner           = "AWS"
-      provider        = "ECS"
-      input_artifacts = ["Build_Artifacts"]
-      version         = "1"
-      configuration = {
-        DeploymentTimeout = "20"
-        ClusterName       = ""
-        ServiceName       = ""
-        FileName          = "artifact.json"
-      }
-    }
-  }
+  # ECS deploy for API services 
+  # stage {
+  #     name = "Deploy"
+
+  #     action {
+  #       name            = "Deploy"
+  #       category        = "Deploy"
+  #       owner           = "AWS"
+  #       provider        = "ECS"
+  #       input_artifacts = ["Build_Artifacts"]
+  #       version         = "1"
+
+  #       configuration = {
+  #         ClusterName = "${var.cicd_auth_env.ecs_cluster_name}"
+  #         ServiceName = "${var.cicd_auth_env.service}"
+  #         FileName    = "artifact.json"
+  #       }
+  #     }
+  # }
 }
 
-#================= Webhook =================#
-# Generate a random secret token for the CodePipeline webhook
-resource "random_string" "secret_token" {
-  length  = 99
-  special = false
+#================= GitHub v2 connection =================#
+resource "aws_codestarconnections_connection" "github" {
+  name          = "${var.project.env}-${var.project.name}-github"
+  provider_type = "GitHub"
+
+  tags = merge(var.tags, {
+    Name = "${var.project.env}-${var.project.name}-github"
+    Module = "${path.module}"
+  })
 }
-
-#CodePipeline webhook
-resource "aws_codepipeline_webhook" "bar" {
-  name            = "${var.project.name}-${var.project.env}-webhook"
-  authentication  = "GITHUB_HMAC"
-  target_action   = "Source"
-  target_pipeline = aws_codepipeline.codepipeline.name
-
-  authentication_configuration {
-    secret_token = random_string.secret_token.result
-  }
-
-  filter {
-    json_path    = "$.ref"
-    match_equals = "refs/heads/{Branch}"
-  }
-}
-
-
-## Wire the CodePipeline webhook into a GitHub repository.
-#resource "github_repository_webhook" "bar" {
-#  repository = var.gitRepo
-#
-#  configuration {
-#    url          = aws_codepipeline_webhook.bar.url
-#    content_type = "json"
-#    insecure_ssl = false
-#    secret       = random_string.secret_token.result
-#  }
-#
-#  events = ["push"]
-#}
-

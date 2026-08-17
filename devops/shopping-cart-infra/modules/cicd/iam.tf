@@ -71,10 +71,14 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
       },
       {
         Action = [
-          "codestar-connections:UseConnection"
+          "codestar-connections:UseConnection",
+          "codeconnections:UseConnection"
         ],
-        Resource = "*",
-        Effect   = "Allow"
+        Resource = [
+          "${aws_codestarconnections_connection.github.arn}",
+          replace("${aws_codestarconnections_connection.github.arn}", "codestar-connections", "codeconnections")
+        ],
+        Effect = "Allow"
       },
       {
         Action = [
@@ -264,15 +268,41 @@ resource "aws_iam_role_policy" "s3_policy_cicd" {
         },
         {
           Effect = "Allow",
-          Resource = [
-            "*"
-          ],
           Action = [
-            "s3:PutObject",
             "s3:GetObject",
+            "s3:GetObjectVersion",
+            "s3:PutObject",
+            "s3:PutObjectTagging",
+            "s3:DeleteObject",
             "s3:ListBucket",
-            "s3:DeleteObject"
-          ]
+            "s3:GetBucketVersioning"
+          ],
+          Resource = concat(
+            flatten([
+              for b in aws_s3_bucket.bucket_artifact : [b.arn, "${b.arn}/*"]
+            ]),
+            [
+              "arn:aws:s3:::${var.cicd_ui_env.s3_bucket_name}",
+              "arn:aws:s3:::${var.cicd_ui_env.s3_bucket_name}/*"
+            ]
+          )
+        },
+        {
+          Effect = "Allow",
+          Action = [
+            "secretsmanager:GetSecretValue",
+            "secretsmanager:DescribeSecret"
+          ],
+          Resource = ["*"]
+        },
+        {
+          Effect = "Allow",
+          Action = [
+            "kms:Decrypt",
+            "kms:DescribeKey",
+            "kms:GenerateDataKey"
+          ],
+          Resource = ["*"]
         },
         {
           Action = [
@@ -285,24 +315,8 @@ resource "aws_iam_role_policy" "s3_policy_cicd" {
             "cloudfront:ListStreamingDistributions",
             "cloudfront:ListDistributions"
           ],
-          Effect = "Allow",
-          Resource = [
-            "*"
-          ],
-        },
-        {
-          Effect = "Allow",
-          Resource = [
-            aws_s3_bucket.bucket_artifact.arn,
-            "${aws_s3_bucket.bucket_artifact.arn}/*"
-          ],
-          Action = [
-            "s3:GetObject",
-            "s3:PutObject",
-            "s3:PutObjectTagging",
-            "s3:GetObjectVersion",
-            "s3:GetBucketVersioning",
-          ]
+          Effect   = "Allow",
+          Resource = ["*"]
         }
       ]
     }
@@ -332,15 +346,11 @@ resource "aws_iam_role_policy" "s3_policy_cicd" {
 
 # # Policy
 # resource "aws_iam_role_policy_attachment" "AWSCodeDeployRole" {
-#   count = var.enable_codedeploy ? 1 : 0
-
 #   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
-#   role       = aws_iam_role.codedeploy_role[0].name
+#   role       = aws_iam_role.codedeploy_role.name
 # }
 
 # resource "aws_iam_role_policy_attachment" "AWSCodeDeployRoleForECS" {
-#   count = var.enable_codedeploy ? 1 : 0
-
 #   policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
-#   role       = aws_iam_role.codedeploy_role[0].name
+#   role       = aws_iam_role.codedeploy_role.name
 # }
