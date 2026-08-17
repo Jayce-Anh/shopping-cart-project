@@ -32,6 +32,11 @@ variable "alb_dns_cert" {
   description = "ACM certificate ARN for the HTTPS listener"
 }
 
+variable "alb_runner_public_cidr" {
+  type        = string
+  description = "GitLab runner public IP as a /32 CIDR"
+}
+
 variable "allowed_cidrs" {
   type        = list(string)
   description = "Company/admin IP CIDRs allowed to reach ArgoCD, Grafana, and Kibana"

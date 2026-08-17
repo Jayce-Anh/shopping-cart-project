@@ -67,7 +67,7 @@ resource "aws_lb_listener_rule" "https_argocd" {
 
   condition {
     source_ip {
-      values = var.allowed_cidrs
+      values = concat(var.allowed_cidrs, [var.alb_runner_public_cidr]) # GitLab CI needs to log in to ArgoCD
     }
   }
 }

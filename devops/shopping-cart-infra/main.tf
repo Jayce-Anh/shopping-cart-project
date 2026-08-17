@@ -56,13 +56,14 @@ module "gitlab_runner" {
 
 #================= External ALB =================#
 module "alb" {
-  source          = "./modules/alb"
-  project         = var.project
-  tags            = var.tags
-  alb_vpc_id      = module.vpc.vpc_id
-  alb_subnet_ids  = module.vpc.public_subnet_ids
-  alb_dns_cert    = module.acm.cert_arns
-  allowed_cidrs   = concat(var.allowed_cidrs, [module.gitlab_runner.public_cidr])
+  source                 = "./modules/alb"
+  project                = var.project
+  tags                   = var.tags
+  alb_vpc_id             = module.vpc.vpc_id
+  alb_subnet_ids         = module.vpc.public_subnet_ids
+  alb_dns_cert           = module.acm.cert_arns
+  alb_runner_public_cidr = module.gitlab_runner.public_cidr
+  allowed_cidrs          = var.allowed_cidrs
 }
 
 #================= CloudFront =================#
