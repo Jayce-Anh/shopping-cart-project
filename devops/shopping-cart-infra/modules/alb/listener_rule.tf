@@ -64,6 +64,12 @@ resource "aws_lb_listener_rule" "https_argocd" {
       values = ["argocd.${var.project.env}-${var.project.name}.${var.project.domain}"] # argocd.lab-shopping-cart.jayce-lab.works
     }
   }
+
+  condition {
+    source_ip {
+      values = var.allowed_cidrs
+    }
+  }
 }
 
 resource "aws_lb_listener_rule" "https_grafana" {
@@ -80,6 +86,12 @@ resource "aws_lb_listener_rule" "https_grafana" {
       values = ["grafana.${var.project.env}-${var.project.name}.${var.project.domain}"] # grafana.lab-shopping-cart.jayce-lab.works
     }
   }
+
+  condition {
+    source_ip {
+      values = var.allowed_cidrs
+    }
+  }
 }
 
 resource "aws_lb_listener_rule" "https_kibana" {
@@ -94,6 +106,12 @@ resource "aws_lb_listener_rule" "https_kibana" {
   condition {
     host_header {
       values = ["kibana.${var.project.env}-${var.project.name}.${var.project.domain}"] # kibana.lab-shopping-cart.jayce-lab.works
+    }
+  }
+
+  condition {
+    source_ip {
+      values = var.allowed_cidrs
     }
   }
 }

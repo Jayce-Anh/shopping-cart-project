@@ -31,3 +31,8 @@ variable "alb_dns_cert" {
   type        = string
   description = "ACM certificate ARN for the HTTPS listener"
 }
+
+variable "allowed_cidrs" {
+  type        = list(string)
+  description = "Company/admin IP CIDRs allowed to reach ArgoCD, Grafana, and Kibana"
+}

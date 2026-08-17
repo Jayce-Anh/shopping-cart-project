@@ -16,6 +16,11 @@ output "private_ip" {
   value = aws_instance.runner.private_ip
 }
 
+output "public_cidrs" {
+  value       = concat(var.allowed_cidrs, ["${aws_eip.runner.public_ip}/32"])
+  description = "Admin CIDRs plus this runner EIP (/32), for ArgoCD CI access"
+}
+
 output "role_arn" {
   value       = aws_iam_role.runner.arn
   description = "ARN of the GitLab runner EC2 IAM role"

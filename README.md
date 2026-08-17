@@ -97,13 +97,13 @@ Internet-facing hostnames format should be: `<service>.<env-application_name>.<y
 
 | Service | Port | Public hostname (Example) | Description |
 | ------- | ---- | --------------- | ----------- |
-| Catalog-service | 4000 | `https://lab-shopping-cart.jayce-lab.works/api/products` | Product catalog API; enriches stock via Inventory; caches with Valkey |
-| Inventory-service | 5000 | `https://lab-shopping-cart.jayce-lab.works/api/inventory` | Inventory API; consumes order events from SQS |
-| Order-service | 6000 | `https://lab-shopping-cart.jayce-lab.works/api/orders` | Orders API; publishes order events to SQS |
-| Web-ui-service | 443 | `https://lab-shopping-cart.jayce-lab.works` | React SPA; CloudFront + S3 (HTTPS) |
-| ArgoCD | 8080 | `https://argocd.lab-shopping-cart.jayce-lab.works` | GitOps console |
-| Kibana | 5601 | `https://kibana.lab-shopping-cart.jayce-lab.works` | Log search and dashboards (EFK) |
-| Grafana | 8090 | `https://grafana.lab-shopping-cart.jayce-lab.works` | Metrics dashboards (Kube-Prometheus) |
+| Catalog-service | 4000 | `https://lab-shopping-cart.jayce-lab.works/api/products` | Product catalog API; enriches stock via Inventory; caches with Valkey. **Public** |
+| Inventory-service | 5000 | `https://lab-shopping-cart.jayce-lab.works/api/inventory` | Inventory API; consumes order events from SQS. **Public** |
+| Order-service | 6000 | `https://lab-shopping-cart.jayce-lab.works/api/orders` | Orders API; publishes order events to SQS. **Public** |
+| Web-ui-service | 443 | `https://lab-shopping-cart.jayce-lab.works` | React SPA; CloudFront + S3 (HTTPS). **Public** |
+| ArgoCD | 8080 | `https://argocd.lab-shopping-cart.jayce-lab.works` | GitOps console. **IP-restricted** (`allowed_cidrs`) |
+| Kibana | 5601 | `https://kibana.lab-shopping-cart.jayce-lab.works` | Log search and dashboards (EFK). **IP-restricted** (`allowed_cidrs`) |
+| Grafana | 8090 | `https://grafana.lab-shopping-cart.jayce-lab.works` | Metrics dashboards (Kube-Prometheus). **IP-restricted** (`allowed_cidrs`) |
 
 ### 4. Repository
 
