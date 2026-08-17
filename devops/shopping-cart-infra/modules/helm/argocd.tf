@@ -1,8 +1,14 @@
 ####################### ARGOCD HELM RELEASE #######################
 
 #================= Password =================#
+# Always get the latest version of the secret credentials
+data "aws_secretsmanager_secret_version" "helm_addon" {
+  secret_id = var.helm_addon_secret
+}
+
+# Password of argocd admin user
 resource "htpasswd_password" "argocd" {
-  password = jsondecode(aws_secretsmanager_secret_version.addons.secret_string).argocd_password
+  password = jsondecode(data.aws_secretsmanager_secret_version.helm_addon.secret_string).argocd_password
 }
 
 #================= Time =================#
@@ -79,11 +85,16 @@ resource "helm_release" "argocd" {
     kubernetes_manifest.cert_manager_cluster_issuer,
     aws_iam_role.argocd,
     aws_eks_pod_identity_association.argocd,
-    aws_secretsmanager_secret_version.addons,
   ]
 }
 
 #================= Secret =================#
+# Always get the latest version of the secret credentials
+data "aws_secretsmanager_secret_version" "helm_git_token" {
+  secret_id = var.helm_git_token_secret
+}
+
+# Git token for argocd repo synchronization
 resource "kubernetes_secret_v1" "argocd_repo" {
   metadata {
     name      = "argocd-repo-creds"

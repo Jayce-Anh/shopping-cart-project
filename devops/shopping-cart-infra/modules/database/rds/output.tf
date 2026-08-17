@@ -25,8 +25,12 @@ output "rds_arn" {
   value       = aws_db_instance.db.arn
 }
 
-output "rds_secret_arn" {
-  description = "ARN of the RDS credentials secret"
-  value       = aws_secretsmanager_secret.mysql.arn
+output "rds_credentials" {
+  description = "RDS credentials"
+  value       = {
+    DATABASE_USERNAME = "${aws_db_instance.db.username}"
+    DATABASE_PASSWORD = "${random_password.rds.result}"
+    DATABASE_HOST     = "${aws_db_instance.db.address}"
+    DATABASE_PORT     = "${aws_db_instance.db.port}"
+  }
 }
-

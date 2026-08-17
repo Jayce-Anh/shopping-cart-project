@@ -59,9 +59,9 @@ resource "aws_iam_role_policy" "external_secrets" {
         Effect = "Allow"
         Action   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
         Resource = [
-          "${aws_secretsmanager_secret.helm-addon.arn}",
-          "${aws_secretsmanager_secret.helm-git-token.arn}",
-          "${var.helm_rds_secret_arn}"
+          "${var.helm_addon_secret}",
+          "${var.helm_git_token_secret}",
+          "${var.helm_rds_secret}",
         ]
       },
       {

@@ -22,6 +22,7 @@ module "secret_manager" {
   project        = var.project
   tags           = var.tags
   secret_kms_key = module.kms.key_arn
+  secret_rds     = module.rds.rds_credentials
 }
 
 #================ VPC =================#
@@ -136,7 +137,9 @@ module "helm" {
   helm_repo_url           = var.helm_repo
   helm_argocd_tg_arn      = module.alb.tg_arns["argocd"]
   helm_sqs_queue_arn      = module.sqs.sqs_queue_arn
-  helm_rds_secret_arn     = module.rds.rds_secret_arn
+  helm_rds_secret         = module.secret_manager.secret_arn["rds-credentials"]
+  helm_addon_secret       = module.secret_manager.secret_arn["helm-addon-credentials"]
+  helm_git_token_secret   = module.secret_manager.secret_arn["helm-git-token"]
   helm_eks_node_group_id  = module.eks.node_group_id
 }
 

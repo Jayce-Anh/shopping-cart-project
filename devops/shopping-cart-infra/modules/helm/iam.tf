@@ -45,8 +45,8 @@ resource "aws_iam_role_policy" "argocd" {
           Effect   = "Allow"
           Action   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
           Resource = [
-            "${aws_secretsmanager_secret.helm-addon.arn}",
-            "${aws_secretsmanager_secret.helm-git-token.arn}",
+            "${var.helm_addon_secret}",
+            "${var.helm_git_token_secret}",
           ]
         },
         {
@@ -61,7 +61,7 @@ resource "aws_iam_role_policy" "argocd" {
           "kms:Decrypt",
           "kms:DescribeKey",
         ]
-        Resource = var.helm_kms_key
+        Resource = "${var.helm_kms_key}"
       }],
     )
   })

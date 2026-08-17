@@ -59,7 +59,17 @@ variable "helm_sqs_queue_arn" {
   description = "SQS queue ARN for inventory/order pod identity access"
 }
 
-variable "helm_rds_secret_arn" {
+variable "helm_rds_secret" {
   type        = string
   description = "ARN of the RDS credentials secret for External Secrets"
+}
+
+variable "helm_addon_secret" {
+  type        = string
+  description = "ARN of the Helm addon credentials secret"
+}
+
+variable "helm_git_token_secret" {
+  type        = string
+  description = "ARN of the Helm Git token secret"
 }
