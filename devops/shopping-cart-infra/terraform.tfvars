@@ -18,4 +18,4 @@ tags = {
 
 helm_repo = "https://gitlab.com/shopping-cart796042412/devops/shoppingcart-manifest.git"
 
-allowed_cidrs = ["x.x.x.x/x"] # Replace with your company/admin IP CIDRs
+allowed_cidrs = ["0.0.0.0/0"] 

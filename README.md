@@ -190,6 +190,8 @@ aws sts get-caller-identity
 
 <img src="docs/images/image63.png" alt="Terraform variables" width="800" />
 
+> For var.allowed_cidrs, you can use your public IP address or 0.0.0.0/0 to allow all traffic (for lab only). In production, you should use your company/admin IP CIDRs.
+
 ### 2. Setup S3 backend remote state
 
 Set up an S3 backend for Terraform state to avoid deployment conflicts and improve state management. Run this from `devops/shopping-cart-infra/remote-tfstate`.
