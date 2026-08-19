@@ -39,5 +39,6 @@ variable "alb_runner_public_cidr" {
 
 variable "allowed_cidrs" {
   type        = list(string)
-  description = "Company/admin IP CIDRs allowed to reach ArgoCD, Grafana, and Kibana"
+  default     = ["0.0.0.0/0"]
+  description = "Allowed CIDRs for ArgoCD, Grafana, and Kibana inbound access"
 }

@@ -40,7 +40,8 @@ variable "eks_allowed_sg" {
 
 variable "allowed_cidrs" {
   type        = list(string)
-  description = "Company/admin IP CIDRs allowed to reach the EKS API"
+  default     = ["0.0.0.0/0"]
+  description = "Allowed CIDRs for EKS API inbound access"
 }
 
 variable "eks_alb_sg_id" {

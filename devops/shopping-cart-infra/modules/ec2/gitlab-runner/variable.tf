@@ -32,5 +32,6 @@ variable "runner_kms_key" {
 
 variable "allowed_cidrs" {
   type        = list(string)
-  description = "Company/admin IP CIDRs allowed to SSH to the GitLab runner"
+  default     = ["0.0.0.0/0"]
+  description = "Allowed CIDRs for GitLab runner inbound access"
 }

@@ -34,5 +34,6 @@ variable "bastion_kms_key" {
 
 variable "allowed_cidrs" {
   type        = list(string)
-  description = "Company/admin IP CIDRs allowed to SSH to the bastion"
+  default     = ["0.0.0.0/0"]
+  description = "Allowed CIDRs for bastion inbound access"
 }

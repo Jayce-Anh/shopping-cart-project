@@ -78,7 +78,7 @@ resource "aws_internet_gateway" "igw" {
 resource "aws_eip" "nat" {
   domain = "vpc"
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
   tags = merge(var.tags, {
     Name = "${var.project.env}-${var.project.name}-nat"

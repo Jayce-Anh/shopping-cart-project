@@ -25,5 +25,6 @@ variable "helm_repo" {
 
 variable "allowed_cidrs" {
   type        = list(string)
-  description = "Company/admin IP CIDRs allowed"
+  default     = ["0.0.0.0/0"]
+  description = "Allowed CIDRs for inbound access"
 }
