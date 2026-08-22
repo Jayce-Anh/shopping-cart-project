@@ -7,7 +7,7 @@ resource "aws_sqs_queue" "queue" {
   delay_seconds              = 0
   receive_wait_time_seconds  = 0
   fifo_queue                 = false
-  kms_master_key_id          = var.sqs_kms_key
+  kms_master_key_id          = var.kms_key_id
 
   tags = merge(var.tags, {
     Name = "${var.project.env}-${var.project.name}-order-events"

@@ -5,7 +5,7 @@
 resource "aws_secretsmanager_secret" "gitlab-runner" {
   name                    = "${var.project.env}-${var.project.name}-gitlab-runner-token"
   recovery_window_in_days = 0
-  kms_key_id              = var.secret_kms_key
+  kms_key_id              = var.kms_key_id
   description             = "GitLab token registered of GitLab runner"
 
   tags = merge(var.tags, {
@@ -17,7 +17,7 @@ resource "aws_secretsmanager_secret" "gitlab-runner" {
 resource "aws_secretsmanager_secret" "mysql" {
   name                    = "${var.project.env}-${var.project.name}-rds-credentials"
   recovery_window_in_days = 0
-  kms_key_id              = var.secret_kms_key
+  kms_key_id              = var.kms_key_id
   description             = "RDS credentials"
 
   tags = merge(var.tags, {
@@ -29,7 +29,7 @@ resource "aws_secretsmanager_secret" "mysql" {
 resource "aws_secretsmanager_secret" "helm-git-token" {
   name                    = "${var.project.env}-${var.project.name}-helm-git-token"
   recovery_window_in_days = 0
-  kms_key_id              = var.secret_kms_key
+  kms_key_id              = var.kms_key_id
   description             = "GitLab token for Helm repository"
 
   tags = merge(var.tags, {
@@ -41,7 +41,7 @@ resource "aws_secretsmanager_secret" "helm-git-token" {
 resource "aws_secretsmanager_secret" "helm-addon" {
   name                    = "${var.project.env}-${var.project.name}-helm-addon-credentials"
   recovery_window_in_days = 0
-  kms_key_id              = var.secret_kms_key
+  kms_key_id              = var.kms_key_id
   description             = "Password of Helm addons and slack webhook URL"
 
   tags = merge(var.tags, {

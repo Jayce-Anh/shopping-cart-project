@@ -14,7 +14,8 @@ variable "tags" {
   description = "Common tags applied to all resources"
 }
 
-variable "ecr_kms_key" {
+#================ ECR =================#
+variable "kms_key_id" {
   type        = string
   description = "KMS key ARN for ECR image encryption"
 }

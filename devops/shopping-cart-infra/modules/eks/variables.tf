@@ -1,13 +1,8 @@
 ####################### VARIABLES #######################
 
-#=========== Project Configuration ==========#
+#================ Project =================#
 variable "project" {
-  type = object({
-    name       = string
-    env        = string
-    region     = string
-    account_id = string
-  })
+  type        = map(string)
   description = "Project metadata configuration"
 }
 
@@ -27,7 +22,7 @@ variable "eks_subnet_ids" {
   description = "Subnet IDs for EKS cluster and node group"
 }
 
-variable "eks_kms_key" {
+variable "kms_key_id" {
   type        = string
   description = "KMS key ARN for EKS secrets envelope encryption and EBS volume encryption"
 }

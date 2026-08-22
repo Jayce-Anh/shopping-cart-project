@@ -22,7 +22,7 @@ variable "sqs_name" {
   description = "Suffix for the SQS queue name"
 }
 
-variable "sqs_kms_key" {
+variable "kms_key_id" {
   type        = string
   description = "KMS key ARN for SQS message encryption"
 }

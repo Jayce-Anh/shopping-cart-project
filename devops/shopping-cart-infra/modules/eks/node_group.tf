@@ -61,7 +61,7 @@ resource "aws_launch_template" "node_group" {
       volume_type           = "gp3"
       delete_on_termination = true
       encrypted             = true
-      kms_key_id            = var.eks_kms_key
+      kms_key_id            = var.kms_key_id
     }
   }
 

@@ -45,7 +45,7 @@ resource "aws_iam_role_policy" "eks_cluster_kms" {
       {
         Effect   = "Allow"
         Action   = ["kms:DescribeKey", "kms:CreateGrant"]
-        Resource = "${var.eks_kms_key}"
+        Resource = "${var.kms_key_id}"
       },
       {
         Effect = "Allow"
@@ -55,7 +55,7 @@ resource "aws_iam_role_policy" "eks_cluster_kms" {
           "kms:ReEncrypt*",
           "kms:GenerateDataKey*",
         ]
-        Resource = "${var.eks_kms_key}"
+        Resource = "${var.kms_key_id}"
       },
     ]
   })
@@ -117,7 +117,7 @@ resource "aws_iam_role_policy" "node_group_kms" {
           "kms:ListGrants",
           "kms:RevokeGrant",
         ]
-        Resource = "${var.eks_kms_key}"
+        Resource = "${var.kms_key_id}"
         Condition = {
           Bool = {
             "kms:GrantIsForAWSResource" = "true"
@@ -133,7 +133,7 @@ resource "aws_iam_role_policy" "node_group_kms" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey",
         ]
-        Resource = "${var.eks_kms_key}"
+        Resource = "${var.kms_key_id}"
       },
     ]
   })
@@ -152,7 +152,7 @@ resource "aws_iam_role_policy" "ebs_csi_driver_kms" {
           "kms:ListGrants",
           "kms:RevokeGrant",
         ]
-        Resource = "${var.eks_kms_key}"
+        Resource = "${var.kms_key_id}"
         Condition = {
           Bool = {
             "kms:GrantIsForAWSResource" = "true"
@@ -168,7 +168,7 @@ resource "aws_iam_role_policy" "ebs_csi_driver_kms" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey",
         ]
-        Resource = "${var.eks_kms_key}"
+        Resource = "${var.kms_key_id}"
       },
     ]
   })

@@ -15,9 +15,9 @@ variable "tags" {
 }
 
 #================ Secret ==================#
-variable "secret_kms_key" {
+variable "kms_key_id" {
   type        = string
-  description = "KMS key ARN to encrypt secrets"
+  description = "KMS key ARN for Secrets Manager encryption"
 }
 
 variable "secret_rds" {

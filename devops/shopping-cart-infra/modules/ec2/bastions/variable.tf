@@ -1,13 +1,9 @@
 ############################### BASTION VARIABLES ###############################
 
+#================ Project =================#
 variable "project" {
-  type = object({
-    name       = string
-    env        = string
-    region     = string
-    account_id = string
-  })
-  description = "Project metadata"
+  type        = map(string)
+  description = "Project configuration"
 }
 
 variable "tags" {
@@ -15,6 +11,7 @@ variable "tags" {
   description = "Common tags applied to all resources"
 }
 
+#================ Bastion =================#
 variable "vpc_id" {
   type        = string
   description = "VPC ID for the bastion"
@@ -25,11 +22,11 @@ variable "subnet_id" {
   description = "Public subnet ID for the bastion"
 }
 
-variable "bastion_kms_key" {
+variable "kms_key_id" {
   type        = string
   default     = null
   nullable    = true
-  description = "KMS key ARN/ID for EBS encryption (null = AWS-managed default key) for the bastion"
+  description = "KMS key ARN/ID for EBS encryption for the bastion"
 }
 
 variable "allowed_cidrs" {

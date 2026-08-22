@@ -36,7 +36,7 @@ resource "aws_elasticache_replication_group" "cache" {
   security_group_ids   = [aws_security_group.sg.id]
 
   at_rest_encryption_enabled = true
-  kms_key_id                 = var.cache_kms_key
+  kms_key_id                 = var.kms_key_id
 
   auto_minor_version_upgrade = false
   apply_immediately          = true

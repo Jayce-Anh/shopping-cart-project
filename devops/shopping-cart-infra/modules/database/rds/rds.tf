@@ -41,7 +41,7 @@ resource "aws_db_instance" "db" {
   vpc_security_group_ids = [aws_security_group.sg_db.id]
 
   storage_encrypted = true
-  kms_key_id        = var.rds_kms_key
+  kms_key_id        = var.kms_key_id
 
   performance_insights_enabled = false
   publicly_accessible          = false

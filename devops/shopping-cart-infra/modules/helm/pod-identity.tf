@@ -70,7 +70,7 @@ resource "aws_iam_role_policy" "external_secrets" {
           "kms:Decrypt",
           "kms:DescribeKey",
         ]
-        Resource = "${var.helm_kms_key}"
+        Resource = "${var.kms_key_id}"
       },
     ]
   })

@@ -1,12 +1,8 @@
-############################## VARIABLES ##############################
+############################## RDS VARIABLES ##############################
 
 #========== Project ==========#
 variable "project" {
-  type = object({
-    name   = string
-    env    = string
-    region = string
-  })
+  type        = map(string)
   description = "Project configuration"
 }
 
@@ -31,7 +27,8 @@ variable "rds_allowed_sg" {
   description = "List of allowed security group IDs to RDS instance"
 }
 
-variable "rds_kms_key" {
+#================ KMS Key =================#
+variable "kms_key_id" {
   type        = string
-  description = "KMS key ARN"
+  description = "KMS key ARN for RDS at-rest encryption"
 }

@@ -124,7 +124,7 @@ shopping-cart-project/
 ```
 
 - Clone this repository for the source tree.
-- Create matching GitLab projects from each folder above.
+- Create matching GitLab private projects from each folder above.
 - Note: You can choose GitHub or GitLab as the source code management and CI/CD system. This lab uses GitLab for CI/CD.
 
 ## III. Prerequisites
@@ -189,9 +189,10 @@ aws sts get-caller-identity
 - Do the same for the root module Terraform variables in `devops/shopping-cart-infra/terraform.tfvars`.
 
 <img src="docs/images/image63.png" alt="Terraform variables" width="800" />
-<img src="docs/images/image64.png" alt="Terraform variables" width="800" />
 
 > For lab only, var.allowed_cidrs can be set to your public IP address or 0.0.0.0/0 (default value) to allow all traffic. In production, you should use your company/admin IP CIDRs.
+
+<img src="docs/images/image64.png" alt="Terraform allowed_cidrs" width="800" />
 
 ### 2. Setup S3 backend remote state
 

@@ -13,7 +13,7 @@ resource "aws_instance" "runner" {
     volume_size           = 40
     volume_type           = "gp3"
     encrypted             = true
-    kms_key_id            = var.runner_kms_key
+    kms_key_id            = var.kms_key_id
   }
 
   user_data                   = file("${path.module}/user_data.sh")

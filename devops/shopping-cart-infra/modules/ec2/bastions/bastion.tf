@@ -13,7 +13,7 @@ resource "aws_instance" "bastion" {
     volume_size           = 20
     volume_type           = "gp3"
     encrypted             = true
-    kms_key_id            = var.bastion_kms_key
+    kms_key_id            = var.kms_key_id
   }
 
   instance_market_options {

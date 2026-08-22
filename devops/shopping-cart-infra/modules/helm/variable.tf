@@ -1,5 +1,6 @@
 ################################### VARIABLES ###################################
 
+#================ Project =================#
 variable "project" {
   type = object({
     name       = string
@@ -16,8 +17,7 @@ variable "tags" {
   description = "Common tags applied to all resources"
 }
 
-#=============== Helm =================#
-
+#================ Helm =================#
 variable "helm_eks_cluster" {
   type        = string
   description = "EKS cluster name"
@@ -33,7 +33,7 @@ variable "helm_vpc_id" {
   description = "VPC ID"
 }
 
-variable "helm_kms_key" {
+variable "kms_key_id" {
   type        = string
   description = "KMS key ARN for Secrets Manager decrypt policies"
 }
