@@ -457,7 +457,7 @@ Destroy from `devops/shopping-cart-infra`. Helm and Kubernetes objects must be d
 
 ```bash
 cd devops/shopping-cart-infra
-terraform init
+terraform plan --destroy
 terraform destroy
 ```
 
